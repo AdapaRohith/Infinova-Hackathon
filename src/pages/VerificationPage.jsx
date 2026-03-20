@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import toast from 'react-hot-toast'
+import { FlowStepper } from '../components/FlowStepper'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
@@ -32,6 +33,8 @@ export function VerificationPage({ candidates }) {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6 pb-14">
+      <FlowStepper currentStep={4} />
+
       <Card>
         <h1 className="text-2xl font-semibold text-white">Verification</h1>
         <p className="mt-2 text-sm text-gray-400">Enter a proof hash to validate candidate authenticity.</p>

@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { Copy } from 'lucide-react'
+import { FlowStepper } from '../components/FlowStepper'
 import { ReportCard } from '../components/ReportCard'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -44,6 +45,8 @@ export function AIReportPage({ candidates, onGenerateProof }) {
 
   return (
     <div className="space-y-6 pb-14">
+      <FlowStepper currentStep={3} />
+
       <ReportCard candidate={candidate} />
 
       <Card>
@@ -71,7 +74,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
             <p className="text-xs text-gray-400">Hash</p>
-            <p className="mt-2 break-all text-sm text-gray-200">
+            <p className="mt-2 break-all text-sm font-mono text-gray-200">
               {candidate.verification?.hash || 'Not generated yet'}
             </p>
           </div>
@@ -88,6 +91,17 @@ export function AIReportPage({ candidates, onGenerateProof }) {
                 {candidate.verification?.status || 'Not Verified'}
               </Badge>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 md:grid-cols-2">
+          <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-3 text-sm text-gray-300">
+            <p className="font-medium text-emerald-300">AI Evaluation Complete</p>
+            <p className="mt-1 text-xs text-gray-400">Candidate signals and skill score generated.</p>
+          </div>
+          <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-3 text-sm text-gray-300">
+            <p className="font-medium text-emerald-300">Proof Stored on Blockchain</p>
+            <p className="mt-1 text-xs text-gray-400">Tamper-proof hash is available for recruiter verification.</p>
           </div>
         </div>
       </Card>

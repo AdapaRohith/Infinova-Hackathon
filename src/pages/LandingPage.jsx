@@ -3,13 +3,10 @@ import {
   Brain,
   Blocks,
   LayoutDashboard,
-  Upload,
-  ScanSearch,
-  FileKey2,
-  BadgeCheck,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { FeatureCard } from '../components/FeatureCard'
+import { FlowStepper } from '../components/FlowStepper'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 
@@ -37,6 +34,7 @@ export function LandingPage() {
       <section className="relative grid items-center gap-10 overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 pt-10 lg:grid-cols-2 lg:p-10 lg:pt-12">
         <div className="pointer-events-none absolute -left-32 -top-32 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_85%)]" />
 
         <Motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -48,10 +46,13 @@ export function LandingPage() {
             Trust Layer for Hiring Decisions
           </p>
           <h1 className="text-balance text-5xl font-bold tracking-tight text-white md:text-6xl">
-            Verified Talent. Not Just Resumes.
+            <span className="bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-200 bg-clip-text text-transparent">
+              Verified Talent.
+            </span>{' '}
+            Not Just Resumes.
           </h1>
           <p className="mt-4 max-w-xl text-gray-300 md:text-lg">
-            AI-powered candidate verification with blockchain-backed trust. Proof-of-Workforce transforms subjective resumes into verifiable proof before final hiring decisions.
+            AI-powered candidate evaluation with tamper-proof blockchain verification.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link to="/analyze">
@@ -115,6 +116,8 @@ export function LandingPage() {
         </Motion.div>
       </section>
 
+      <FlowStepper currentStep={1} />
+
       <section>
         <div className="mb-8">
           <h2 className="text-3xl font-semibold text-white">Platform Capabilities</h2>
@@ -132,39 +135,7 @@ export function LandingPage() {
           <h2 className="text-3xl font-semibold text-white">System Flow</h2>
           <p className="mt-2 text-gray-400">From upload to immutable trust proof in four clear steps.</p>
         </div>
-        <div className="grid gap-3 lg:grid-cols-4">
-          <Card className="relative space-y-3">
-            <div className="inline-flex rounded-full bg-gray-800/90 p-2">
-              <Upload className="size-4 text-indigo-300" />
-            </div>
-            <p className="text-sm font-semibold text-white">1. Upload Candidate</p>
-            <p className="text-sm text-gray-400">Provide name, email, resume and profile link.</p>
-            <div className="absolute right-[-10px] top-1/2 hidden h-px w-5 bg-gray-700 lg:block" />
-          </Card>
-          <Card className="relative space-y-3">
-            <div className="inline-flex rounded-full bg-gray-800/90 p-2">
-              <ScanSearch className="size-4 text-indigo-300" />
-            </div>
-            <p className="text-sm font-semibold text-white">2. AI Analysis</p>
-            <p className="text-sm text-gray-400">Generate score, strengths, weaknesses, and summary.</p>
-            <div className="absolute right-[-10px] top-1/2 hidden h-px w-5 bg-gray-700 lg:block" />
-          </Card>
-          <Card className="relative space-y-3">
-            <div className="inline-flex rounded-full bg-gray-800/90 p-2">
-              <FileKey2 className="size-4 text-indigo-300" />
-            </div>
-            <p className="text-sm font-semibold text-white">3. Generate Proof</p>
-            <p className="text-sm text-gray-400">Create blockchain-style hash with timestamp and status.</p>
-            <div className="absolute right-[-10px] top-1/2 hidden h-px w-5 bg-gray-700 lg:block" />
-          </Card>
-          <Card className="space-y-3">
-            <div className="inline-flex rounded-full bg-gray-800/90 p-2">
-              <BadgeCheck className="size-4 text-emerald-300" />
-            </div>
-            <p className="text-sm font-semibold text-white">4. Verify on Blockchain</p>
-            <p className="text-sm text-gray-400">Share hash and validate trust in one step.</p>
-          </Card>
-        </div>
+        <FlowStepper currentStep={1} />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
