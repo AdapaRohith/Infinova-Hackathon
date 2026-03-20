@@ -26,11 +26,11 @@ export function Timeline({ candidate }) {
           {step.done ? (
             <CheckCircle2 className="mt-0.5 size-4 text-emerald-400" />
           ) : (
-            <CircleDotDashed className="mt-0.5 size-4 text-zinc-500" />
+            <CircleDotDashed className="mt-0.5 size-4 text-gray-500" />
           )}
           <div>
-            <p className="text-sm text-zinc-200">{step.label}</p>
-            <p className="text-xs text-zinc-500">{step.timestamp ? new Date(step.timestamp).toLocaleString() : 'Pending'}</p>
+            <p className="text-sm text-gray-200">{step.label}</p>
+            <p className="text-xs text-gray-500">{step.timestamp ? new Date(step.timestamp).toLocaleString() : 'Pending'}</p>
           </div>
         </li>
       ))}

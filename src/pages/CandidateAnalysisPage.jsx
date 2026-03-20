@@ -5,12 +5,14 @@ import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Loader } from '../components/ui/Loader'
+import { ScoreBar } from '../components/ScoreBar'
 
 const initialForm = {
-  name: '',
-  email: '',
-  link: '',
-  resumeName: '',
+  name: 'Avery Quinn',
+  email: 'avery@candidate.dev',
+  link: 'https://github.com/avery',
+  resumeName: 'Avery_Resume.pdf',
 }
 
 export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
@@ -42,8 +44,8 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
   return (
     <div className="grid gap-6 pb-14 lg:grid-cols-5">
       <Card className="lg:col-span-2">
-        <h1 className="text-2xl font-semibold text-zinc-100">Candidate Analysis</h1>
-        <p className="mt-2 text-sm text-zinc-400">Run AI skill verification and generate a trusted candidate profile.</p>
+        <h1 className="text-2xl font-semibold text-white">Candidate Analysis</h1>
+        <p className="mt-2 text-sm text-gray-400">Run AI skill verification and generate a trusted candidate profile.</p>
 
         <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
           <Input
@@ -61,14 +63,14 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
             placeholder="avery@candidate.dev"
             required
           />
-          <label className="flex flex-col gap-2 text-sm text-zinc-300">
+          <label className="flex flex-col gap-2 text-sm text-gray-300">
             <span>Resume Upload (mock)</span>
             <input
               type="file"
               onChange={(event) =>
                 handleChange('resumeName', event.target.files?.[0]?.name || '')
               }
-              className="rounded-2xl border border-white/10 bg-zinc-950/80 px-4 py-2.5 text-sm text-zinc-300"
+              className="rounded-2xl border border-gray-800 bg-gray-950 px-4 py-2.5 text-sm text-gray-300"
             />
           </label>
           <Input
@@ -81,15 +83,24 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
           <Button className="w-full" disabled={loading}>
             {loading ? 'Analyzing with AI...' : 'Analyze with AI'}
           </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => setForm(initialForm)}
+          >
+            Use Demo Data
+          </Button>
         </form>
       </Card>
 
       <Card className="lg:col-span-3">
-        <h2 className="text-xl font-semibold text-zinc-100">AI Output</h2>
-        <p className="mt-1 text-sm text-zinc-400">Simulated skill intelligence based on submitted profile.</p>
+        <h2 className="text-xl font-semibold text-white">AI Output</h2>
+        <p className="mt-1 text-sm text-gray-400">Simulated skill intelligence based on submitted profile.</p>
 
         {loading ? (
           <div className="mt-6 space-y-3">
+            <Loader label="AI agents are validating resume and portfolio signals..." />
             <Skeleton className="h-8 w-40" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-24 w-full" />
@@ -99,10 +110,21 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
 
         {!loading && result ? (
           <div className="mt-6 space-y-4">
-            <p className="text-sm text-zinc-300">Skill score: <span className="font-semibold text-zinc-100">{result.analysis.score}/100</span></p>
-            <p className="text-sm text-zinc-300">Strengths: {result.analysis.strengths.join(', ')}</p>
-            <p className="text-sm text-zinc-300">Weaknesses: {result.analysis.weaknesses.join(', ')}</p>
-            <p className="text-sm text-zinc-300">Summary: {result.analysis.summary}</p>
+            <ScoreBar score={result.analysis.score} />
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+                <p className="text-sm font-semibold text-white">Strengths</p>
+                <p className="mt-2 text-sm text-gray-300">{result.analysis.strengths.join(', ')}</p>
+              </div>
+              <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+                <p className="text-sm font-semibold text-white">Weaknesses</p>
+                <p className="mt-2 text-sm text-gray-300">{result.analysis.weaknesses.join(', ')}</p>
+              </div>
+            </div>
+            <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+              <p className="text-sm font-semibold text-white">AI Summary</p>
+              <p className="mt-2 text-sm text-gray-300">{result.analysis.summary}</p>
+            </div>
             <Button variant="secondary" onClick={() => navigate(`/report/${result.id}`)}>
               Open AI Report
             </Button>
@@ -110,8 +132,8 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
         ) : null}
 
         {!loading && !result ? (
-          <div className="mt-6 rounded-2xl border border-dashed border-white/10 p-6 text-sm text-zinc-500">
-            Submit a candidate to generate AI insights.
+          <div className="mt-6 rounded-2xl border border-dashed border-gray-700 p-6 text-sm text-gray-400">
+            Submit a candidate to generate AI insights. Demo values are pre-filled for quick presentation.
           </div>
         ) : null}
       </Card>

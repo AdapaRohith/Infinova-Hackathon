@@ -48,22 +48,22 @@ export function DashboardPage({ candidates }) {
     <div className="space-y-6 pb-14">
       <div className="grid gap-3 sm:grid-cols-3">
         <Card className="p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Total Candidates</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-100">{stats.total}</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400">Total Candidates</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{stats.total}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Verified On-chain</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400">Verified On-chain</p>
           <p className="mt-2 text-2xl font-semibold text-emerald-300">{stats.verified}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs uppercase tracking-wide text-zinc-500">Average Score</p>
-          <p className="mt-2 text-2xl font-semibold text-zinc-100">{stats.avgScore}</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400">Average Score</p>
+          <p className="mt-2 text-2xl font-semibold text-white">{stats.avgScore}</p>
         </Card>
       </div>
 
       <Card>
-        <h1 className="text-2xl font-semibold text-zinc-100">Recruiter Dashboard</h1>
-        <p className="mt-2 text-sm text-zinc-400">Filter and review candidate verification status at a glance.</p>
+        <h1 className="text-2xl font-semibold text-white">Recruiter Dashboard</h1>
+        <p className="mt-2 text-sm text-gray-400">Filter and review candidate verification status at a glance.</p>
 
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           <Input
@@ -78,7 +78,7 @@ export function DashboardPage({ candidates }) {
             value={maxScore}
             onChange={(event) => setMaxScore(event.target.value)}
           />
-          <label className="flex items-end gap-3 rounded-2xl border border-white/10 bg-zinc-950/80 px-4 py-3 text-sm text-zinc-300 md:col-span-2">
+          <label className="flex items-end gap-3 rounded-2xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300 md:col-span-2">
             <input
               type="checkbox"
               checked={verifiedOnly}

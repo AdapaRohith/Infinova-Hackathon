@@ -5,22 +5,22 @@ export function Modal({ open, title, onClose, children }) {
     <AnimatePresence>
       {open ? (
         <Motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <Motion.div
-            className="w-full max-w-3xl rounded-2xl border border-white/10 bg-zinc-950 p-6"
+            className="w-full max-w-4xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6 shadow-xl backdrop-blur"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
             onClick={(event) => event.stopPropagation()}
           >
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-zinc-100">{title}</h3>
-              <button className="text-zinc-400 transition hover:text-zinc-200" onClick={onClose}>
+              <h3 className="text-lg font-semibold text-white">{title}</h3>
+              <button className="text-gray-400 transition hover:text-white" onClick={onClose}>
                 Close
               </button>
             </div>

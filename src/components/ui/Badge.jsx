@@ -7,7 +7,7 @@ export function Badge({ className, children, success = false }) {
         'rounded-full px-2.5 py-1 text-xs font-medium',
         success
           ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/40'
-          : 'bg-zinc-700/40 text-zinc-300 ring-1 ring-white/10',
+          : 'bg-gray-800 text-gray-300 ring-1 ring-gray-700',
         className,
       )}
     >

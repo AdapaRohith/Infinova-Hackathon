@@ -72,7 +72,7 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100">
+    <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
       <main className="mx-auto max-w-6xl px-6 pt-8">
         <Routes>
@@ -102,9 +102,9 @@ function App() {
         position="top-right"
         toastOptions={{
           style: {
-            background: '#111113',
-            color: '#f4f4f5',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: '#111827',
+            color: '#ffffff',
+            border: '1px solid rgba(55, 65, 81, 1)',
           },
         }}
       />

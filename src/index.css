@@ -14,15 +14,24 @@ body {
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
   background:
-    radial-gradient(circle at 0% 0%, rgba(50, 50, 60, 0.35), transparent 32%),
-    radial-gradient(circle at 100% 100%, rgba(40, 40, 50, 0.2), transparent 30%),
-    #050506;
-  color: #f4f4f5;
+    radial-gradient(circle at 10% 0%, rgba(76, 72, 170, 0.24), transparent 26%),
+    radial-gradient(circle at 90% 95%, rgba(67, 56, 202, 0.2), transparent 24%),
+    #030712;
+  color: #ffffff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+::selection {
+  background: rgba(129, 140, 248, 0.35);
+  color: #fff;
 }
