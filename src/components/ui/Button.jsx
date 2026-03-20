@@ -2,7 +2,7 @@ import { cn } from '../../utils/helpers'
 
 const variants = {
   primary:
-    'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-xl shadow-indigo-500/25 hover:from-indigo-400 hover:to-violet-400',
+    'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-xl shadow-indigo-500/25 hover:from-indigo-400 hover:to-violet-400 hover:brightness-110',
   secondary:
     'bg-gray-900 text-white ring-1 ring-gray-700 hover:bg-gray-800',
   ghost: 'bg-transparent text-gray-300 hover:bg-gray-900',
@@ -14,7 +14,7 @@ export function Button({ className, variant = 'primary', ...props }) {
   return (
     <button
       className={cn(
-        'rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-300 active:scale-[0.98] hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50',
+        'rounded-2xl px-4 py-2.5 text-sm font-medium transition-all duration-300 active:scale-[0.97] hover:scale-[1.03] hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-50',
         variants[variant],
         className,
       )}

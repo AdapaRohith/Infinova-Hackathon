@@ -34,6 +34,7 @@ export function LandingPage() {
       <section className="relative grid items-center gap-10 overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 pt-10 lg:grid-cols-2 lg:p-10 lg:pt-12">
         <div className="pointer-events-none absolute -left-32 -top-32 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
+        <div className="pointer-events-none absolute left-14 top-20 h-48 w-48 rounded-full bg-indigo-400/25 blur-[90px]" />
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_85%)]" />
 
         <Motion.div
@@ -45,7 +46,7 @@ export function LandingPage() {
           <p className="mb-4 inline-flex rounded-full border border-gray-800 bg-gray-950 px-3 py-1 text-xs text-gray-400">
             Trust Layer for Hiring Decisions
           </p>
-          <h1 className="text-balance text-5xl font-bold tracking-tight text-white md:text-6xl">
+          <h1 className="text-balance text-5xl font-bold leading-[1.03] tracking-tight text-white md:text-7xl">
             <span className="bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-200 bg-clip-text text-transparent">
               Verified Talent.
             </span>{' '}
@@ -62,6 +63,10 @@ export function LandingPage() {
               <Button variant="secondary">View Dashboard</Button>
             </Link>
           </div>
+
+          <p className="mt-6 max-w-2xl text-base italic text-gray-300 md:text-lg">
+            Hiring based on claims is broken. We verify truth.
+          </p>
 
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
             <Card className="p-4 text-center">

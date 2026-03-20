@@ -6,7 +6,7 @@ export function Input({ className, label, ...props }) {
       {label ? <span>{label}</span> : null}
       <input
         className={cn(
-          'rounded-2xl border border-gray-800 bg-gray-950 px-4 py-2.5 text-sm text-white outline-none transition focus:border-indigo-400',
+          'rounded-2xl border border-gray-800 bg-gray-950 px-4 py-2.5 text-sm text-white outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500/30',
           className,
         )}
         {...props}
