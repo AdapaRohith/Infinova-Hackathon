@@ -37,7 +37,7 @@ export function FlowStepper({ currentStep = 1 }) {
 
   return (
     <div className="rounded-2xl border border-gray-800 bg-gray-900/70 p-4 backdrop-blur">
-      <p className="text-xs uppercase tracking-wide text-gray-400">Interactive Demo Flow</p>
+      <p className="text-xs uppercase tracking-wide text-gray-400">Interactive Workflow</p>
       <ol className="mt-3 grid gap-3 md:grid-cols-4">
         {steps.map((step, index) => {
           const stepNumber = index + 1

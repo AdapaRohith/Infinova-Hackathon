@@ -47,13 +47,14 @@ const toStructuredAnalysis = (rawText = '') => {
   const text = String(rawText)
 
   const scoreMatch = text.match(/Score\s*:\s*(\d+)/i)
-  const summaryMatch = text.match(/Summary\s*:\s*([\s\S]*?)(?:\n\s*Strengths\s*:|$)/i)
-  const strengthsMatch = text.match(/Strengths\s*:\s*([\s\S]*?)(?:\n\s*Weaknesses\s*:|$)/i)
-  const weaknessesMatch = text.match(/Weaknesses\s*:\s*([\s\S]*)$/i)
+  const summaryMatch = text.match(/Summary\s*:\s*([\s\S]*?)(?:\n\s*(?:Strengths|Skills)\s*:|$)/i)
+  const strengthsMatch = text.match(/Strengths\s*:\s*([\s\S]*?)(?:\n\s*(?:Weaknesses|Skills)\s*:|$)/i)
+  const weaknessesMatch = text.match(/Weaknesses\s*:\s*([\s\S]*?)(?:\n\s*(?:Skills)\s*:|$)/i)
+  const skillsMatch = text.match(/Skills\s*:\s*([\s\S]*)$/i)
 
   const parseBulletList = (sectionText) =>
     String(sectionText || '')
-      .split('\n')
+      .split(/[,\n•]/)
       .map((line) => line.replace(/^\s*[-•]\s*/, '').trim())
       .filter(Boolean)
 
@@ -62,6 +63,7 @@ const toStructuredAnalysis = (rawText = '') => {
     summary: summaryMatch ? summaryMatch[1].trim() : text.trim(),
     strengths: parseBulletList(strengthsMatch?.[1]),
     weaknesses: parseBulletList(weaknessesMatch?.[1]),
+    skills: parseBulletList(skillsMatch?.[1]),
   }
 }
 
@@ -87,22 +89,32 @@ const analyzeCandidateWithAI = async (payload) => {
 
   let data
   try {
-    data = JSON.parse(rawBody)
+    const parsed = JSON.parse(rawBody)
+    console.log('Raw data received from n8n:', parsed)
+    data = Array.isArray(parsed) ? parsed[0] : parsed
   } catch {
     throw new Error('n8n returned non-JSON content. Ensure webhook response format is JSON.')
   }
 
   if (data?.report) {
-    return data.report
+    return {
+      score: Number(data.report.score ?? 0),
+      skills: Array.isArray(data.report.skills) ? data.report.skills : [],
+      summary: String(data.report.summary ?? ''),
+      strengths: Array.isArray(data.report.strengths) ? data.report.strengths : [],
+      weaknesses: Array.isArray(data.report.weaknesses) ? data.report.weaknesses : [],
+    }
   }
 
-  if (
-    typeof data?.score === 'number' &&
-    Array.isArray(data?.strengths) &&
-    Array.isArray(data?.weaknesses) &&
-    typeof data?.summary === 'string'
-  ) {
-    return data
+  const hasDirectFields = (data?.score !== undefined || data?.summary !== undefined)
+  if (hasDirectFields) {
+    return {
+      score: Number(data.score ?? 0),
+      skills: Array.isArray(data.skills) ? data.skills : [],
+      summary: String(data.summary ?? ''),
+      strengths: Array.isArray(data.strengths) ? data.strengths : [],
+      weaknesses: Array.isArray(data.weaknesses) ? data.weaknesses : [],
+    }
   }
 
   if (typeof data?.text === 'string' && data.text.trim()) {
@@ -134,9 +146,9 @@ function App() {
     email: payload.email,
     link: payload.link,
     resumeName: payload.resumeName,
-    projects: payload.link ? [payload.link] : ['not provided'],
+     projects: payload.link ? [payload.link] : [],
     skills: [],
-    experience: 'Not clearly specified',
+     experience: '',
     yearsOfExperience: 0,
     projectHighlights: payload.link ? [`Project link: ${payload.link}`] : [],
     education: [],
@@ -144,30 +156,19 @@ function App() {
   }
  }
 
- const aiInput = {
-  name: normalized.name || payload.name,
-  email: normalized.email || payload.email,
-  link: normalized.link || payload.link,
-  resumeName: normalized.resumeName || payload.resumeName,
-  projects: normalized.projects,
-  skills: normalized.skills,
-  experience: normalized.experience,
-  yearsOfExperience: normalized.yearsOfExperience,
-  projectHighlights: normalized.projectHighlights,
-  education: normalized.education,
-  certifications: normalized.certifications,
- }
+ const aiInput = { ...normalized }
 
  const aiReport = await analyzeCandidateWithAI(aiInput)
 
   const candidate = {
     id: crypto.randomUUID(),
-    name: normalized.name,
-    email: normalized.email,
-    link: normalized.link,
-    resumeName: normalized.resumeName,
+    ...normalized,
     createdAt: new Date().toISOString(),
-    analysis: aiReport,
+    analysis: {
+      ...aiReport,
+      // Merge AI skills with extracted skills if AI didn't provide any
+      skills: aiReport.skills?.length ? aiReport.skills : normalized.skills
+    },
     verification: null,
   }
 

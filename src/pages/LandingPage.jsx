@@ -14,7 +14,7 @@ const features = [
   {
     icon: Brain,
     title: 'AI Evaluation',
-    description: 'Autonomous assessment engine simulates deep capability verification.',
+    description: 'Autonomous assessment engine evaluates candidate capability from submitted profile data.',
   },
   {
     icon: Blocks,
@@ -70,16 +70,16 @@ export function LandingPage() {
 
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
             <Card className="p-4 text-center">
-              <p className="text-xl font-semibold text-white">91%</p>
-              <p className="mt-1 text-xs text-gray-400">Avg AI confidence</p>
+              <p className="text-xl font-semibold text-white">AI</p>
+              <p className="mt-1 text-xs text-gray-400">Structured Evaluation</p>
             </Card>
             <Card className="p-4 text-center">
-              <p className="text-xl font-semibold text-white">2.1s</p>
-              <p className="mt-1 text-xs text-gray-400">Mock analysis time</p>
+              <p className="text-xl font-semibold text-white">Web3</p>
+              <p className="mt-1 text-xs text-gray-400">On-chain Proof</p>
             </Card>
             <Card className="p-4 text-center">
-              <p className="text-xl font-semibold text-white">100%</p>
-              <p className="mt-1 text-xs text-gray-400">Traceable proofs</p>
+              <p className="text-xl font-semibold text-white">Trust</p>
+              <p className="mt-1 text-xs text-gray-400">Verifiable Workflow</p>
             </Card>
           </div>
         </Motion.div>
@@ -92,10 +92,9 @@ export function LandingPage() {
         >
           <div className="space-y-4">
             <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
-              <p className="text-xs text-gray-400">Live Verification Snapshot</p>
-              <p className="mt-2 text-sm text-gray-200">AI confidence: 91%</p>
-              <p className="text-sm text-gray-200">Proof hash: 0x8cf...f23d</p>
-              <p className="text-sm text-emerald-300">Status: Verified on-chain</p>
+              <p className="text-xs text-gray-400">Live Verification Status</p>
+              <p className="mt-2 text-sm text-gray-200">AI score, proof hash, and verification status are generated after each analysis.</p>
+              <p className="text-sm text-emerald-300">Status updates in real time from submitted candidate data.</p>
             </div>
             <section
               aria-label="Verification details"

@@ -26,25 +26,75 @@ export function ReportCard({ candidate }) {
           </Badge>
         </div>
         <ScoreBar score={candidate.analysis.score} />
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <p className="mb-2 text-sm font-semibold text-gray-200">Strengths</p>
-            <ul className="space-y-1 text-sm text-gray-400">
-              {candidate.analysis.strengths.map((item) => (
-                <li key={item}>• {item}</li>
-              ))}
-            </ul>
+
+        <div className="grid gap-6 sm:grid-cols-2">
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-sm font-semibold text-gray-200">Skills</p>
+              <div className="flex flex-wrap gap-1.5">
+                {(candidate.analysis.skills || candidate.skills || []).map((skill) => (
+                  <span key={skill} className="rounded-md bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-300 border border-indigo-500/20">
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="mb-2 text-sm font-semibold text-gray-200">Experience</p>
+              <p className="text-sm text-gray-400">{candidate.experience || 'Not specified'}</p>
+              {candidate.yearsOfExperience > 0 && (
+                <p className="mt-1 text-xs text-gray-500">{candidate.yearsOfExperience} total years detected</p>
+              )}
+            </div>
+
+            {candidate.education?.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold text-gray-200">Education</p>
+                <ul className="space-y-1 text-xs text-gray-400">
+                  {candidate.education.map((item, idx) => (
+                    <li key={idx}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
-          <div>
-            <p className="mb-2 text-sm font-semibold text-gray-200">Weaknesses</p>
-            <ul className="space-y-1 text-sm text-gray-400">
-              {candidate.analysis.weaknesses.map((item) => (
-                <li key={item}>• {item}</li>
-              ))}
-            </ul>
+
+          <div className="space-y-4">
+            <div>
+              <p className="mb-2 text-sm font-semibold text-gray-200">Strengths</p>
+              <ul className="space-y-1 text-sm text-gray-400">
+                {candidate.analysis.strengths.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-semibold text-gray-200">Weaknesses</p>
+              <ul className="space-y-1 text-sm text-gray-400">
+                {candidate.analysis.weaknesses.map((item) => (
+                  <li key={item}>• {item}</li>
+                ))}
+              </ul>
+            </div>
+            {candidate.certifications?.length > 0 && (
+              <div>
+                <p className="mb-2 text-sm font-semibold text-gray-200">Certifications</p>
+                <ul className="space-y-1 text-xs text-gray-400">
+                  {candidate.certifications.map((item, idx) => (
+                    <li key={idx}>• {item}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
-        <p className="text-sm text-gray-300">{candidate.analysis.summary}</p>
+
+        <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+          <p className="mb-2 text-sm font-semibold text-white">AI Summary</p>
+          <p className="text-sm text-gray-300 leading-relaxed">{candidate.analysis.summary}</p>
+        </div>
+
         <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
           <p className="mb-3 text-sm font-semibold text-gray-200">Verification Timeline</p>
           <Timeline candidate={candidate} />

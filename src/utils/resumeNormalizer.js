@@ -60,8 +60,8 @@ const extractSkills = (text) => {
     .map((item) => item.name)
 
   const skillsSection = getSection(text, ['skills', 'technical skills', 'tech stack', 'technologies'])
-  const sectionMatch = skillsSection.match(/[\s\S]{0,600}/i)
-  const sectionSkills = sectionMatch
+  const sectionMatch = skillsSection.match(/([\s\S]{0,600})/i)
+  const sectionSkills = sectionMatch && sectionMatch[1]
     ? sectionMatch[1]
         .split(/[|,\n•]/)
         .map((item) => item.replace(/[^a-z0-9.+#\- ]/gi, '').trim())
@@ -239,5 +239,6 @@ export const normalizeResumePayload = async (payload) => {
     projectHighlights,
     education,
     certifications,
+    resumeText,
   }
 }

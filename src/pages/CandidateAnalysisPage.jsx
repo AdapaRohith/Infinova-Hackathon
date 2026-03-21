@@ -137,8 +137,19 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
             >
-              <p className="text-sm font-medium text-emerald-300">AI Evaluation Complete</p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-medium text-emerald-300">AI Evaluation Complete</p>
+                <div className="flex flex-wrap gap-1">
+                  {(result.analysis.skills || result.skills || []).slice(0, 5).map(skill => (
+                    <span key={skill} className="rounded-md bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-300">
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              
               <ScoreBar score={result.analysis.score} />
+              
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
                   <p className="text-sm font-semibold text-white">Strengths</p>
@@ -151,7 +162,7 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
               </div>
               <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
                 <p className="text-sm font-semibold text-white">AI Summary</p>
-                <p className="mt-2 text-sm text-gray-300">{result.analysis.summary}</p>
+                <p className="mt-2 text-sm text-gray-300 line-clamp-3">{result.analysis.summary}</p>
               </div>
               <Button variant="secondary" onClick={() => navigate(`/report/${result.id}`)}>
                 Open AI Report

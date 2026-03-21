@@ -14,6 +14,6 @@ export const saveCandidates = (candidates) => {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(candidates))
   } catch {
-    // ignore storage errors in demo mode
+    // ignore storage errors
   }
 }
