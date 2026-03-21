@@ -35,7 +35,7 @@ export function LandingPage() {
         <div className="pointer-events-none absolute -left-32 -top-32 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-20 -right-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
         <div className="pointer-events-none absolute left-14 top-20 h-48 w-48 rounded-full bg-indigo-400/25 blur-[90px]" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-[size:42px_42px] [mask-image:radial-gradient(ellipse_at_center,black_35%,transparent_85%)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[42px_42px] mask-[radial-gradient(ellipse_at_center,black_35%,transparent_85%)]" />
 
         <Motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -47,7 +47,7 @@ export function LandingPage() {
             Trust Layer for Hiring Decisions
           </p>
           <h1 className="text-balance text-5xl font-bold leading-[1.03] tracking-tight text-white md:text-7xl">
-            <span className="bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-200 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-indigo-300 via-violet-300 to-indigo-200 bg-clip-text text-transparent">
               Verified Talent.
             </span>{' '}
             Not Just Resumes.

@@ -7,9 +7,10 @@ import { CandidateAnalysisPage } from './pages/CandidateAnalysisPage'
 import { AIReportPage } from './pages/AIReportPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { VerificationPage } from './pages/VerificationPage'
-import { simulateCandidateAnalysis } from './utils/aiMock'
-import { generateFakeHash } from './utils/hash'
 import { loadCandidates, saveCandidates } from './utils/storage'
+import { generateHash } from './utils/hash'
+import { storeHash } from './utils/blockchain'
+import { normalizeResumePayload } from './utils/resumeNormalizer'
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -23,7 +24,16 @@ const reducer = (state, action) => {
               verification: {
                 hash: action.payload.hash,
                 timestamp: action.payload.timestamp,
+                txHash: action.payload.txHash,
                 status: 'Verified on-chain',
+                history: [
+                  ...(candidate.verification?.history ?? []),
+                  {
+                    hash: action.payload.hash,
+                    timestamp: action.payload.timestamp,
+                    txHash: action.payload.txHash,
+                  },
+                ],
               },
             }
           : candidate,
@@ -33,6 +43,75 @@ const reducer = (state, action) => {
   }
 }
 
+const toStructuredAnalysis = (rawText = '') => {
+  const text = String(rawText)
+
+  const scoreMatch = text.match(/Score\s*:\s*(\d+)/i)
+  const summaryMatch = text.match(/Summary\s*:\s*([\s\S]*?)(?:\n\s*Strengths\s*:|$)/i)
+  const strengthsMatch = text.match(/Strengths\s*:\s*([\s\S]*?)(?:\n\s*Weaknesses\s*:|$)/i)
+  const weaknessesMatch = text.match(/Weaknesses\s*:\s*([\s\S]*)$/i)
+
+  const parseBulletList = (sectionText) =>
+    String(sectionText || '')
+      .split('\n')
+      .map((line) => line.replace(/^\s*[-•]\s*/, '').trim())
+      .filter(Boolean)
+
+  return {
+    score: scoreMatch ? Number(scoreMatch[1]) : 0,
+    summary: summaryMatch ? summaryMatch[1].trim() : text.trim(),
+    strengths: parseBulletList(strengthsMatch?.[1]),
+    weaknesses: parseBulletList(weaknessesMatch?.[1]),
+  }
+}
+
+const analyzeCandidateWithAI = async (payload) => {
+  console.log('Sending payload to n8n analyze-candidate webhook', payload)
+
+  const res = await fetch('https://n8n.avlokai.com/webhook/analyze-candidate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  if (!res.ok) {
+    throw new Error(`n8n webhook request failed with status ${res.status}`)
+  }
+
+  const rawBody = await res.text()
+  if (!rawBody?.trim()) {
+    throw new Error('n8n returned an empty response body. Check Respond to Webhook node output.')
+  }
+
+  let data
+  try {
+    data = JSON.parse(rawBody)
+  } catch {
+    throw new Error('n8n returned non-JSON content. Ensure webhook response format is JSON.')
+  }
+
+  if (data?.report) {
+    return data.report
+  }
+
+  if (
+    typeof data?.score === 'number' &&
+    Array.isArray(data?.strengths) &&
+    Array.isArray(data?.weaknesses) &&
+    typeof data?.summary === 'string'
+  ) {
+    return data
+  }
+
+  if (typeof data?.text === 'string' && data.text.trim()) {
+    return toStructuredAnalysis(data.text)
+  }
+
+  throw new Error('n8n response is missing report payload')
+}
+
 function App() {
   const [candidates, dispatch] = useReducer(reducer, [], loadCandidates)
 
@@ -40,36 +119,91 @@ function App() {
     saveCandidates(candidates)
   }, [candidates])
 
-  const handleAnalyzeCandidate = async (payload) => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 1700)
-    })
+ const handleAnalyzeCandidate = async (payload) => {
+  await new Promise((resolve) => {
+    setTimeout(resolve, 1000)
+  })
 
-    const candidate = {
-      id: crypto.randomUUID(),
-      name: payload.name,
-      email: payload.email,
-      link: payload.link,
-      resumeName: payload.resumeName,
-      createdAt: new Date().toISOString(),
-      analysis: simulateCandidateAnalysis(payload),
-      verification: null,
-    }
+ let normalized
+ try {
+  normalized = await normalizeResumePayload(payload)
+ } catch (error) {
+  console.error('Resume normalization failed, using direct form payload.', error)
+  normalized = {
+    name: payload.name,
+    email: payload.email,
+    link: payload.link,
+    resumeName: payload.resumeName,
+    projects: payload.link ? [payload.link] : ['not provided'],
+    skills: [],
+    experience: 'Not clearly specified',
+    yearsOfExperience: 0,
+    projectHighlights: payload.link ? [`Project link: ${payload.link}`] : [],
+    education: [],
+    certifications: [],
+  }
+ }
 
-    dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
-    return candidate
+ const aiInput = {
+  name: normalized.name || payload.name,
+  email: normalized.email || payload.email,
+  link: normalized.link || payload.link,
+  resumeName: normalized.resumeName || payload.resumeName,
+  projects: normalized.projects,
+  skills: normalized.skills,
+  experience: normalized.experience,
+  yearsOfExperience: normalized.yearsOfExperience,
+  projectHighlights: normalized.projectHighlights,
+  education: normalized.education,
+  certifications: normalized.certifications,
+ }
+
+ const aiReport = await analyzeCandidateWithAI(aiInput)
+
+  const candidate = {
+    id: crypto.randomUUID(),
+    name: normalized.name,
+    email: normalized.email,
+    link: normalized.link,
+    resumeName: normalized.resumeName,
+    createdAt: new Date().toISOString(),
+    analysis: aiReport,
+    verification: null,
   }
 
-  const handleGenerateProof = (candidateId) => {
+  dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
+  return candidate
+}
+const handleGenerateProof = async (candidateId, onStatusChange) => {
+  const candidate = candidates.find((item) => item.id === candidateId)
+  if (!candidate) return null
+
+  try {
+    const hash = generateHash(candidate.analysis)
+
+    const tx = await storeHash(candidateId, hash, onStatusChange)
+
     dispatch({
       type: 'ADD_BLOCKCHAIN_PROOF',
       payload: {
         id: candidateId,
-        hash: generateFakeHash(),
-        timestamp: new Date().toISOString(),
+        hash,
+        txHash: tx.txHash,
+        timestamp: tx.timestamp,
       },
     })
+
+    return {
+      hash,
+      txHash: tx.txHash,
+      timestamp: tx.timestamp,
+    }
+  } catch (error) {
+    console.error('Blockchain error:', error)
+    throw error
   }
+}
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">

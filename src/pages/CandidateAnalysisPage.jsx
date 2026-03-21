@@ -11,10 +11,11 @@ import { Loader } from '../components/ui/Loader'
 import { ScoreBar } from '../components/ScoreBar'
 
 const initialForm = {
-  name: 'Avery Quinn',
-  email: 'avery@candidate.dev',
-  link: 'https://github.com/avery',
-  resumeName: 'Avery_Resume.pdf',
+  name: '',
+  email: '',
+  link: '',
+  resumeName: '',
+  resumeFile: null,
 }
 
 export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
@@ -37,10 +38,15 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
     setLoading(true)
     setResult(null)
 
-    const candidate = await onAnalyzeCandidate(form)
-    setResult(candidate)
-    setLoading(false)
-    toast.success('AI analysis complete')
+    try {
+      const candidate = await onAnalyzeCandidate(form)
+      setResult(candidate)
+      toast.success('AI analysis complete')
+    } catch (error) {
+      toast.error(error?.message || 'Real AI analysis failed. Verify your n8n webhook is active and reachable.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -69,12 +75,15 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
             required
           />
           <label className="flex flex-col gap-2 text-sm text-gray-300">
-            <span>Resume Upload (mock)</span>
+            <span>Resume Upload</span>
             <input
               type="file"
-              onChange={(event) =>
-                handleChange('resumeName', event.target.files?.[0]?.name || '')
-              }
+              accept=".pdf,application/pdf"
+              onChange={(event) => {
+                const file = event.target.files?.[0] || null
+                handleChange('resumeFile', file)
+                handleChange('resumeName', file?.name || '')
+              }}
               className="rounded-2xl border border-gray-800 bg-gray-950 px-4 py-2.5 text-sm text-gray-300"
             />
           </label>
@@ -94,14 +103,14 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
             className="w-full"
             onClick={() => setForm(initialForm)}
           >
-            Use Demo Data
+            Clear Form
           </Button>
         </form>
       </Card>
 
       <Card className="lg:col-span-3">
         <h2 className="text-xl font-semibold text-white">AI Output</h2>
-        <p className="mt-1 text-sm text-gray-400">Simulated skill intelligence based on submitted profile.</p>
+        <p className="mt-1 text-sm text-gray-400">AI insights fetched from your n8n workflow.</p>
 
         <AnimatePresence mode="wait">
           {loading ? (
@@ -157,7 +166,7 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
               animate={{ opacity: 1 }}
               className="mt-6 rounded-2xl border border-dashed border-gray-700 p-6 text-sm text-gray-400"
             >
-              Submit a candidate to generate AI insights. Demo values are pre-filled for quick presentation.
+              Submit a candidate to fetch real AI analysis from n8n.
             </Motion.div>
           ) : null}
         </AnimatePresence>
