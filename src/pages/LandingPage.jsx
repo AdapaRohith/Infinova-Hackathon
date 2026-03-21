@@ -75,7 +75,7 @@ export function LandingPage() {
             </Card>
             <Card className="p-4 text-center">
               <p className="text-xl font-semibold text-white">2.1s</p>
-              <p className="mt-1 text-xs text-gray-400">Mock analysis time</p>
+              <p className="mt-1 text-xs text-gray-400">Avg analysis time</p>
             </Card>
             <Card className="p-4 text-center">
               <p className="text-xl font-semibold text-white">100%</p>

@@ -7,9 +7,10 @@ import { CandidateAnalysisPage } from './pages/CandidateAnalysisPage'
 import { AIReportPage } from './pages/AIReportPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { VerificationPage } from './pages/VerificationPage'
-import { simulateCandidateAnalysis } from './utils/aiMock'
-import { generateFakeHash } from './utils/hash'
+// TODO: Replace with real API calls
 import { loadCandidates, saveCandidates } from './utils/storage'
+
+import { extractTextFromPDF } from './utils/pdfExtractor'
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -41,31 +42,72 @@ function App() {
   }, [candidates])
 
   const handleAnalyzeCandidate = async (payload) => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 1700)
-    })
+    try {
+      const resumeText = payload.resumeFile ? await extractTextFromPDF(payload.resumeFile) : ''
+      
+      const response = await fetch('https://n8n.avlokai.com/webhook/analyze-candidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          link: payload.link,
+          resumeText,
+        }),
+      })
 
-    const candidate = {
-      id: crypto.randomUUID(),
-      name: payload.name,
-      email: payload.email,
-      link: payload.link,
-      resumeName: payload.resumeName,
-      createdAt: new Date().toISOString(),
-      analysis: simulateCandidateAnalysis(payload),
-      verification: null,
+      if (!response.ok) {
+        throw new Error('Failed to analyze candidate')
+      }
+
+      const raw = await response.json()
+      console.log('n8n raw response:', raw)
+
+      // Handle all possible n8n response shapes:
+      // 1. [{ report: {...} }]  – Respond to Webhook with array wrapper
+      // 2. { report: {...} }    – Respond to Webhook as plain object
+      // 3. { score, skills, strengths, weaknesses, summary } – flat report
+      let report
+      if (Array.isArray(raw)) {
+        const first = raw[0]
+        report = first?.report ?? first
+      } else {
+        report = raw?.report ?? raw
+      }
+      console.log('parsed report:', report)
+
+      const candidate = {
+        id: crypto.randomUUID(),
+        name: payload.name,
+        email: payload.email,
+        link: payload.link,
+        resumeName: payload.resumeName || payload.resumeFile?.name || 'resume.pdf',
+        createdAt: new Date().toISOString(),
+        analysis: {
+          score: report?.score ?? 0,
+          skills: report?.skills || [],
+          strengths: report?.strengths || [],
+          weaknesses: report?.weaknesses || [],
+          summary: report?.summary || 'Analysis complete.',
+        },
+        verification: null,
+      }
+
+      dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
+      return candidate
+    } catch (err) {
+      console.error(err)
+      throw err
     }
-
-    dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
-    return candidate
   }
 
   const handleGenerateProof = (candidateId) => {
+    // TODO: Connect to real backend
     dispatch({
       type: 'ADD_BLOCKCHAIN_PROOF',
       payload: {
         id: candidateId,
-        hash: generateFakeHash(),
+        hash: 'pending_verification_hash',
         timestamp: new Date().toISOString(),
       },
     })

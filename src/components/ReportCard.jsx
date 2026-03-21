@@ -44,6 +44,21 @@ export function ReportCard({ candidate }) {
             </ul>
           </div>
         </div>
+        {candidate.analysis.skills?.length > 0 && (
+          <div>
+            <p className="mb-2 text-sm font-semibold text-gray-200">Skills</p>
+            <div className="flex flex-wrap gap-2">
+              {candidate.analysis.skills.map((skill) => (
+                <span
+                  key={skill}
+                  className="rounded-full border border-indigo-500/40 bg-indigo-500/10 px-3 py-1 text-xs font-medium text-indigo-300"
+                >
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <p className="text-sm text-gray-300">{candidate.analysis.summary}</p>
         <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
           <p className="mb-3 text-sm font-semibold text-gray-200">Verification Timeline</p>
