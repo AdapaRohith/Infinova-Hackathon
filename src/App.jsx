@@ -175,6 +175,7 @@ function App() {
   dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
   return candidate
 }
+
 const handleGenerateProof = async (candidateId, onStatusChange) => {
   const candidate = candidates.find((item) => item.id === candidateId)
   if (!candidate) return null
