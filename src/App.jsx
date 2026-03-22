@@ -40,6 +40,8 @@ const reducer = (state, action) => {
           }
           : candidate,
       )
+    case 'CLEAR_CANDIDATES':
+      return []
     default:
       return state
   }
@@ -436,6 +438,10 @@ function App() {
     }
   }
 
+  const handleClearCandidates = () => {
+    dispatch({ type: 'CLEAR_CANDIDATES' })
+  }
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -458,7 +464,15 @@ function App() {
               />
             }
           />
-          <Route path="/dashboard" element={<DashboardPage candidates={candidates} />} />
+          <Route
+            path="/dashboard"
+            element={
+              <DashboardPage
+                candidates={candidates}
+                onClearCandidates={handleClearCandidates}
+              />
+            }
+          />
           <Route path="/verify" element={<VerificationPage candidates={candidates} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -5,7 +5,7 @@ import { Button } from './ui/Button'
 import { formatDateTime } from '../utils/helpers'
 
 const shortenHash = (value) => {
-  if (!value) return 'Not available yet'
+  if (!value) return ''
   if (value.length <= 20) return value
   return `${value.slice(0, 10)}...${value.slice(-8)}`
 }
@@ -21,6 +21,10 @@ export function BlockchainProofCard({
   agentSignature,
 }) {
   const etherscanUrl = txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : ''
+  const proofPending = !hash && !txHash
+  const displayedHash = shortenHash(hash)
+  const displayedTxHash = shortenHash(txHash)
+  const displayedAgentSignature = shortenHash(agentSignature)
 
   const statusConfig =
     status === 'verified'
@@ -48,13 +52,13 @@ export function BlockchainProofCard({
     <Card className={`rounded-2xl p-6 shadow-lg ${statusConfig.cardGlow}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-           <h3 className="text-lg font-semibold text-white">🔐 Blockchain Proof</h3>
-           {agentSignature && (
-             <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
-               <ShieldCheck className="size-3" />
-               AGENT SIGNED
-             </div>
-           )}
+          <h3 className="text-lg font-semibold text-white">Blockchain Proof</h3>
+          {agentSignature && (
+            <div className="flex items-center gap-1 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
+              <ShieldCheck className="size-3" />
+              AGENT SIGNED
+            </div>
+          )}
         </div>
         {statusConfig.badge}
       </div>
@@ -62,27 +66,38 @@ export function BlockchainProofCard({
       <div className="mt-4 grid gap-4 md:grid-cols-3">
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-gray-400">Hash</p>
+            <p className="text-xs text-gray-400">Proof Hash</p>
             <Button
               variant="secondary"
               className="rounded-lg px-2 py-1 text-xs"
               onClick={onCopyHash}
+              disabled={!hash}
             >
               <Copy className="mr-1 size-3.5" />
               {copied ? 'Copied' : 'Copy'}
             </Button>
           </div>
-          <p className="mt-2 text-sm font-mono text-gray-200" title={hash || 'Not generated yet'}>
-            {shortenHash(hash)}
-          </p>
-          <p className="mt-2 text-[10px] text-gray-500 italic">
-            Includes AI Agent Signature: {shortenHash(agentSignature) || 'N/A'}
-          </p>
+          {proofPending ? (
+            <>
+              <p className="mt-2 text-sm font-medium text-gray-200">Proof not generated yet</p>
+              <p className="mt-2 text-[10px] italic text-gray-500">
+                Hash, transaction link, and agent seal will appear after you generate proof.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="mt-2 text-sm font-mono text-gray-200" title={hash}>
+                {displayedHash}
+              </p>
+              <p className="mt-2 text-[10px] italic text-gray-500">
+                Includes AI Agent Signature: {displayedAgentSignature || 'Not attached'}
+              </p>
+            </>
+          )}
         </div>
 
-
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
-          <p className="text-xs text-gray-400">Status & Timestamp</p>
+          <p className="text-xs text-gray-400">Status and Timestamp</p>
           <div className="mt-2 flex items-center gap-2 text-sm text-gray-200">
             {statusConfig.icon}
             <span>{statusConfig.label}</span>
@@ -93,20 +108,24 @@ export function BlockchainProofCard({
 
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
           <p className="text-xs text-gray-400">Transaction</p>
-          <p className="mt-2 text-sm font-mono text-gray-300" title={txHash || '—'}>
-            {shortenHash(txHash)}
+          <p className="mt-2 text-sm font-mono text-gray-300" title={txHash || 'Pending proof generation'}>
+            {displayedTxHash || 'Created after on-chain submission'}
           </p>
           <a
             href={etherscanUrl || '#'}
             target="_blank"
             rel="noreferrer"
-            className="mt-3 inline-flex items-center gap-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-1.5 text-xs font-medium text-gray-200 transition hover:border-indigo-400/60 hover:text-white"
+            className={`mt-3 inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
+              etherscanUrl
+                ? 'border-gray-700 bg-gray-900 text-gray-200 hover:border-indigo-400/60 hover:text-white'
+                : 'cursor-not-allowed border-gray-800 bg-gray-900/50 text-gray-500'
+            }`}
             onClick={(event) => {
               if (!etherscanUrl) event.preventDefault()
             }}
           >
             <ExternalLink className="size-3.5" />
-            View on Etherscan 🔗
+            {etherscanUrl ? 'View on Etherscan' : 'Etherscan available after proof'}
           </a>
         </div>
       </div>

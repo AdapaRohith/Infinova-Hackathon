@@ -1,3 +1,4 @@
+import { ExternalLink } from 'lucide-react'
 import { Button } from './ui/Button'
 import { Badge } from './ui/Badge'
 import { Table, TableBody, TableHead } from './ui/Table'
@@ -25,6 +26,12 @@ export function CandidateTable({ candidates, onViewReport }) {
       </TableHead>
       <TableBody>
         {candidates.map((candidate, index) => (
+          (() => {
+            const etherscanUrl = candidate.verification?.txHash
+              ? `https://sepolia.etherscan.io/tx/${candidate.verification.txHash}`
+              : ''
+
+            return (
           <tr key={candidate.id} className="hover:bg-gray-900/80">
             <td className="px-4 py-3">{candidate.name}</td>
             <td className="px-4 py-3">
@@ -50,11 +57,31 @@ export function CandidateTable({ candidates, onViewReport }) {
               </Badge>
             </td>
             <td className="px-4 py-3">
-              <Button variant="secondary" onClick={() => onViewReport(candidate)}>
-                View Report
-              </Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={() => onViewReport(candidate)}>
+                  View Report
+                </Button>
+                <a
+                  href={etherscanUrl || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(event) => {
+                    if (!etherscanUrl) event.preventDefault()
+                  }}
+                  className={`inline-flex items-center gap-1 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                    etherscanUrl
+                      ? 'border-gray-700 bg-gray-900 text-gray-200 hover:border-indigo-400/60 hover:text-white'
+                      : 'cursor-not-allowed border-gray-800 bg-gray-900/50 text-gray-500'
+                  }`}
+                >
+                  <ExternalLink className="size-3.5" />
+                  {etherscanUrl ? 'View on Etherscan' : 'No Proof Yet'}
+                </a>
+              </div>
             </td>
           </tr>
+            )
+          })()
         ))}
       </TableBody>
     </Table>

@@ -1,15 +1,23 @@
 import { useMemo, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { CandidateTable } from '../components/CandidateTable'
 import { ReportCard } from '../components/ReportCard'
+import { Button } from '../components/ui/Button'
 
-export function DashboardPage({ candidates }) {
+export function DashboardPage({ candidates, onClearCandidates }) {
   const [minScore, setMinScore] = useState(0)
   const [maxScore, setMaxScore] = useState(100)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [selectedCandidate, setSelectedCandidate] = useState(null)
+
+  const handleClearDashboard = () => {
+    setSelectedCandidate(null)
+    onClearCandidates?.()
+    toast.success('Dashboard cleared')
+  }
 
   const filtered = useMemo(
     () =>
@@ -78,8 +86,19 @@ export function DashboardPage({ candidates }) {
       </div>
 
       <Card>
-        <h1 className="text-2xl font-semibold text-white">Recruiter Dashboard</h1>
-        <p className="mt-2 text-sm text-gray-400">Filter and review candidate verification status at a glance.</p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold text-white">Recruiter Dashboard</h1>
+            <p className="mt-2 text-sm text-gray-400">Filter and review candidate verification status at a glance.</p>
+          </div>
+          <Button
+            variant="ghost"
+            onClick={handleClearDashboard}
+            disabled={!candidates.length}
+          >
+            Clear Dashboard
+          </Button>
+        </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-4">
           <Input
