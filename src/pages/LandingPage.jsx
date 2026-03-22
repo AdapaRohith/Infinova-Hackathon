@@ -3,6 +3,9 @@ import {
   Brain,
   Blocks,
   LayoutDashboard,
+  Sparkles,
+  Shield,
+  Zap,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { FeatureCard } from '../components/FeatureCard'
@@ -16,170 +19,249 @@ const features = [
     icon: Brain,
     title: 'AI Evaluation',
     description: 'Autonomous assessment engine evaluates candidate capability from submitted profile data.',
+    gradient: 'from-indigo-500/20 to-violet-500/20',
   },
   {
     icon: Blocks,
     title: 'Blockchain Verification',
     description: 'Each candidate proof is hashed and recorded for immutable trust.',
+    gradient: 'from-emerald-500/20 to-teal-500/20',
   },
   {
     icon: LayoutDashboard,
     title: 'Recruiter Dashboard',
     description: 'Track evaluated candidates with instant verification status and filters.',
+    gradient: 'from-amber-500/20 to-orange-500/20',
   },
 ]
 
+const stats = [
+  { icon: Sparkles, value: 'AI', label: 'Structured Evaluation', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
+  { icon: Shield, value: 'Web3', label: 'On-chain Proof', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+  { icon: Zap, value: 'Trust', label: 'Verifiable Workflow', color: 'text-violet-400', bg: 'bg-violet-500/10' },
+]
+
+const stagger = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.1 },
+  },
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
+}
+
+const fadeIn = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { duration: 0.6 } },
+}
+
 export function LandingPage() {
   return (
-    <div className="space-y-14 pb-16 md:space-y-20">
-      <section className="relative grid items-center gap-10 overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 pt-10 lg:grid-cols-2 lg:p-10 lg:pt-12">
-        <div className="pointer-events-none absolute -left-32 -top-32 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -right-24 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="pointer-events-none absolute left-14 top-20 h-48 w-48 rounded-full bg-indigo-400/25 blur-[90px]" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.04)_1px,transparent_1px)] bg-size-[42px_42px] mask-[radial-gradient(ellipse_at_center,black_35%,transparent_85%)]" />
+    <div className="space-y-16 pb-20 md:space-y-24">
 
+      {/* ═══ HERO ═══ */}
+      <section className="relative grid items-center gap-10 overflow-hidden rounded-3xl border border-gray-800/60 bg-gradient-to-br from-gray-900/80 via-gray-900/60 to-gray-950/90 p-8 pt-10 lg:grid-cols-2 lg:p-12 lg:pt-14">
+        {/* Ambient blurs */}
+        <div className="pointer-events-none absolute -left-32 -top-32 h-72 w-72 rounded-full bg-indigo-500/20 blur-[100px] animate-float" />
+        <div className="pointer-events-none absolute -bottom-24 -right-28 h-80 w-80 rounded-full bg-violet-500/20 blur-[100px]" style={{ animationDelay: '2s' }} />
+        <div className="pointer-events-none absolute left-1/2 top-0 h-48 w-48 rounded-full bg-indigo-400/15 blur-[80px]" />
+
+        {/* Grid pattern */}
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-size-[48px_48px] mask-[radial-gradient(ellipse_at_center,black_30%,transparent_80%)]" />
+
+        {/* Left: Copy */}
         <Motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative"
+          variants={stagger}
+          initial="hidden"
+          animate="show"
+          className="relative z-10"
         >
-          <p className="mb-4 inline-flex rounded-full border border-gray-800 bg-gray-950 px-3 py-1 text-xs text-gray-400">
+          <Motion.p variants={fadeUp} className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-4 py-1.5 text-xs font-medium text-indigo-300 animate-pulse-glow">
+            <Sparkles className="size-3" />
             Trust Layer for Hiring Decisions
-          </p>
-          <h1 className="text-balance text-5xl font-bold leading-[1.03] tracking-tight text-white md:text-7xl">
-            <span className="bg-linear-to-r from-indigo-300 via-violet-300 to-indigo-200 bg-clip-text text-transparent">
+          </Motion.p>
+
+          <Motion.h1 variants={fadeUp} className="text-balance text-4xl font-extrabold leading-[1.05] tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+            <span className="bg-gradient-to-r from-indigo-300 via-violet-300 to-indigo-200 bg-clip-text text-transparent animate-gradient">
               Verified Talent.
             </span>{' '}
             Not Just Resumes.
-          </h1>
-          <p className="mt-4 max-w-xl text-gray-300 md:text-lg">
+          </Motion.h1>
+
+          <Motion.p variants={fadeUp} className="mt-5 max-w-lg text-base text-gray-300 md:text-lg">
             AI-powered candidate evaluation with tamper-proof blockchain verification.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
+          </Motion.p>
+
+          <Motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
             <Link to="/analyze">
               <Button>Analyze Candidate</Button>
             </Link>
             <Link to="/dashboard">
               <Button variant="secondary">View Dashboard</Button>
             </Link>
-          </div>
+          </Motion.div>
 
-          <p className="mt-6 max-w-2xl text-base italic text-gray-300 md:text-lg">
+          <Motion.p variants={fadeUp} className="mt-6 max-w-lg text-sm italic text-gray-400">
             Hiring based on claims is broken. We verify truth.
-          </p>
+          </Motion.p>
 
-          <div className="mt-8 grid max-w-xl grid-cols-3 gap-3">
-            <Card className="p-4 text-center">
-              <p className="text-xl font-semibold text-white">AI</p>
-              <p className="mt-1 text-xs text-gray-400">Structured Evaluation</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <p className="text-xl font-semibold text-white">Web3</p>
-              <p className="mt-1 text-xs text-gray-400">On-chain Proof</p>
-            </Card>
-            <Card className="p-4 text-center">
-              <p className="text-xl font-semibold text-white">Trust</p>
-              <p className="mt-1 text-xs text-gray-400">Verifiable Workflow</p>
-            </Card>
-          </div>
+          {/* Stats row */}
+          <Motion.div variants={fadeUp} className="mt-8 grid max-w-lg grid-cols-3 gap-3">
+            {stats.map((stat) => (
+              <div key={stat.label} className={`group relative overflow-hidden rounded-xl border border-gray-800/60 ${stat.bg} p-4 text-center transition-all duration-300 hover:border-gray-700 hover:scale-[1.03]`}>
+                <stat.icon className={`mx-auto mb-2 size-4 ${stat.color} transition group-hover:scale-110`} />
+                <p className="text-lg font-bold text-white">{stat.value}</p>
+                <p className="mt-0.5 text-[10px] uppercase tracking-wider text-gray-400">{stat.label}</p>
+              </div>
+            ))}
+          </Motion.div>
         </Motion.div>
 
+        {/* Right: Preview panel */}
         <Motion.div
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.55, delay: 0.1 }}
-          className="relative rounded-2xl border border-gray-800 bg-gray-900/80 p-6 shadow-xl backdrop-blur"
+          initial={{ opacity: 0, scale: 0.94, x: 20 }}
+          animate={{ opacity: 1, scale: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: 'easeOut' }}
+          className="relative z-10 rounded-2xl border border-gray-800/60 bg-gray-900/70 p-6 shadow-2xl shadow-indigo-500/5 backdrop-blur-xl"
         >
           <div className="space-y-4">
-            <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
-              <p className="text-xs text-gray-400">Live Verification Status</p>
-              <p className="mt-2 text-sm text-gray-200">AI score, proof hash, and verification status are generated after each analysis.</p>
-              <p className="text-sm text-emerald-300">Status updates in real time from submitted candidate data.</p>
-            </div>
-            <section
+            <Motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="rounded-xl border border-gray-800/50 bg-gray-950/60 p-4"
+            >
+              <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-400">
+                <span className="size-1.5 rounded-full bg-indigo-400 animate-pulse" />
+                Live Verification Status
+              </p>
+              <p className="mt-2.5 text-sm leading-relaxed text-gray-300">AI score, proof hash, and verification status are generated after each analysis.</p>
+              <p className="mt-1 text-sm text-emerald-300/90">Status updates in real time from submitted candidate data.</p>
+            </Motion.div>
+
+            <Motion.section
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55 }}
               aria-label="Verification details"
-              className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4"
+              className="rounded-xl border border-gray-800/50 bg-gray-950/60 p-4"
             >
               <h3 className="text-sm font-semibold text-white">What this proof includes</h3>
-              <ul className="mt-3 space-y-2 text-sm text-gray-300">
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-gray-400" aria-hidden="true" />
-                  Candidate identity metadata tied to AI evaluation output
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-gray-400" aria-hidden="true" />
-                  Immutable hash + timestamp for independent verification
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="mt-1 size-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
-                  On-chain status signal recruiters can trust at review time
-                </li>
+              <ul className="mt-3 space-y-2.5 text-sm text-gray-300">
+                {[
+                  { color: 'bg-blue-400', text: 'Candidate identity metadata tied to AI evaluation output' },
+                  { color: 'bg-violet-400', text: 'Immutable hash + timestamp for independent verification' },
+                  { color: 'bg-emerald-400', text: 'On-chain status signal recruiters can trust at review time' },
+                ].map((item) => (
+                  <li key={item.text} className="flex items-start gap-2.5">
+                    <span className={`mt-1.5 size-1.5 rounded-full ${item.color} shrink-0`} aria-hidden="true" />
+                    {item.text}
+                  </li>
+                ))}
               </ul>
-            </section>
+            </Motion.section>
           </div>
         </Motion.div>
       </section>
 
-      <section>
+      {/* ═══ INTERACTIVE WORKFLOW ═══ */}
+      <Motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-white">Interactive Workflow</h2>
+          <h2 className="text-3xl font-bold text-white">Interactive Workflow</h2>
           <p className="mt-2 text-gray-400">Step-by-step guide to using the Proof-of-Workforce platform.</p>
         </div>
         <FlowStepper currentStep={1} />
-      </section>
+      </Motion.section>
 
+      {/* ═══ PLATFORM CAPABILITIES ═══ */}
       <section>
-        <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-white">Platform Capabilities</h2>
+        <Motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ duration: 0.4 }}
+          className="mb-8"
+        >
+          <h2 className="text-3xl font-bold text-white">Platform Capabilities</h2>
           <p className="mt-2 text-gray-400">Built to make hiring decisions evidence-driven and audit-friendly.</p>
-        </div>
-        <div className="grid gap-4 md:grid-cols-3">
+        </Motion.div>
+        <div className="grid gap-5 md:grid-cols-3">
           {features.map((feature, index) => (
             <FeatureCard key={feature.title} {...feature} delay={index * 0.12} />
           ))}
         </div>
       </section>
 
-      <section>
+      {/* ═══ SYSTEM FLOW ═══ */}
+      <Motion.section
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="mb-8">
-          <h2 className="text-3xl font-semibold text-white">System Flow</h2>
+          <h2 className="text-3xl font-bold text-white">System Flow</h2>
           <p className="mt-2 text-gray-400">The technical architecture that powers our autonomous trust engine.</p>
         </div>
         <SystemFlow />
-      </section>
+      </Motion.section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <h3 className="text-lg font-semibold text-white">About Proof-of-Workforce</h3>
-          <p className="mt-3 text-sm leading-6 text-gray-300">
-            Proof-of-Workforce is built as a hiring trust infrastructure layer. It does not replace recruiters or ATS workflows.
-            It adds a defensible verification signal, helping teams justify hiring decisions with transparent AI output and tamper-resistant proof records.
-          </p>
-          <ul className="mt-4 space-y-2 text-sm text-gray-400">
-            <li>• Reduces resume inflation risk with structured assessment signals.</li>
-            <li>• Enables audit-friendly candidate history for leadership and compliance.</li>
-            <li>• Improves recruiter confidence with consistent, comparable reports.</li>
-          </ul>
-        </Card>
-        <Card>
-          <h3 className="text-lg font-semibold text-white">Why Teams Use It</h3>
-          <div className="mt-4 space-y-3 text-sm text-gray-300">
-            <div className="rounded-2xl border border-gray-800 bg-gray-950/60 p-3">
-              <p className="font-medium text-white">For Recruiters</p>
-              <p className="mt-1 text-gray-400">Get clarity fast on who to advance and why.</p>
+      {/* ═══ ABOUT + WHY ═══ */}
+      <Motion.section
+        variants={stagger}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '-60px' }}
+        className="grid gap-5 lg:grid-cols-2"
+      >
+        <Motion.div variants={fadeUp}>
+          <Card className="h-full">
+            <h3 className="text-lg font-bold text-white">About Proof-of-Workforce</h3>
+            <p className="mt-3 text-sm leading-relaxed text-gray-300">
+              Proof-of-Workforce is built as a hiring trust infrastructure layer. It does not replace recruiters or ATS workflows.
+              It adds a defensible verification signal, helping teams justify hiring decisions with transparent AI output and tamper-resistant proof records.
+            </p>
+            <ul className="mt-5 space-y-2.5 text-sm text-gray-400">
+              {[
+                'Reduces resume inflation risk with structured assessment signals.',
+                'Enables audit-friendly candidate history for leadership and compliance.',
+                'Improves recruiter confidence with consistent, comparable reports.',
+              ].map((text) => (
+                <li key={text} className="flex items-start gap-2">
+                  <span className="mt-1.5 size-1 rounded-full bg-indigo-400 shrink-0" />
+                  {text}
+                </li>
+              ))}
+            </ul>
+          </Card>
+        </Motion.div>
+
+        <Motion.div variants={fadeUp}>
+          <Card className="h-full">
+            <h3 className="text-lg font-bold text-white">Why Teams Use It</h3>
+            <div className="mt-4 space-y-3">
+              {[
+                { role: 'For Recruiters', desc: 'Get clarity fast on who to advance and why.', color: 'border-indigo-500/20' },
+                { role: 'For Hiring Managers', desc: 'See strengths and risk areas before technical interviews.', color: 'border-violet-500/20' },
+                { role: 'For Operations', desc: 'Retain proof trails and verification records for decision audits.', color: 'border-emerald-500/20' },
+              ].map((item) => (
+                <div key={item.role} className={`group rounded-xl border ${item.color} bg-gray-950/50 p-3.5 transition-all duration-300 hover:bg-gray-900/60 hover:scale-[1.01]`}>
+                  <p className="text-sm font-semibold text-white">{item.role}</p>
+                  <p className="mt-1 text-sm text-gray-400">{item.desc}</p>
+                </div>
+              ))}
             </div>
-            <div className="rounded-2xl border border-gray-800 bg-gray-950/60 p-3">
-              <p className="font-medium text-white">For Hiring Managers</p>
-              <p className="mt-1 text-gray-400">See strengths and risk areas before technical interviews.</p>
-            </div>
-            <div className="rounded-2xl border border-gray-800 bg-gray-950/60 p-3">
-              <p className="font-medium text-white">For Operations</p>
-              <p className="mt-1 text-gray-400">Retain proof trails and verification records for decision audits.</p>
-            </div>
-          </div>
-        </Card>
-      </section>
+          </Card>
+        </Motion.div>
+      </Motion.section>
     </div>
   )
 }
