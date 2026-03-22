@@ -30,6 +30,12 @@ export function DashboardPage({ candidates }) {
     const verified = candidates.filter(
       (candidate) => candidate.verification?.status === 'Verified on-chain',
     ).length
+    const trusted = candidates.filter(
+      (candidate) => candidate.analysis?.assessment?.verdict === 'Trusted',
+    ).length
+    const highRisk = candidates.filter(
+      (candidate) => candidate.analysis?.assessment?.verdict === 'High Risk',
+    ).length
     const avgScore = candidates.length
       ? Math.round(
           candidates.reduce((total, candidate) => total + (candidate.analysis?.score ?? 0), 0) /
@@ -40,13 +46,15 @@ export function DashboardPage({ candidates }) {
     return {
       total: candidates.length,
       verified,
+      trusted,
+      highRisk,
       avgScore,
     }
   }, [candidates])
 
   return (
     <div className="space-y-6 pb-14">
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-gray-400">Total Candidates</p>
           <p className="mt-2 text-2xl font-semibold text-white">{stats.total}</p>
@@ -58,6 +66,14 @@ export function DashboardPage({ candidates }) {
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-gray-400">Average Score</p>
           <p className="mt-2 text-2xl font-semibold text-white">{stats.avgScore}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-400">Trusted</p>
+          <p className="mt-2 text-2xl font-semibold text-emerald-300">{stats.trusted}</p>
+        </Card>
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-gray-400">High Risk</p>
+          <p className="mt-2 text-2xl font-semibold text-red-300">{stats.highRisk}</p>
         </Card>
       </div>
 

@@ -1,21 +1,21 @@
 import { motion as Motion } from 'framer-motion'
-import { FileText, Cpu, Github, ShieldCheck, Database, ArrowRight } from 'lucide-react'
+import { FileText, Cpu, Github, ShieldCheck, Database, ArrowRight, ScanSearch } from 'lucide-react'
 
 const systemNodes = [
   {
     id: 'input',
     icon: FileText,
     label: 'PDF Resume',
-    sub: 'Data Extraction',
+    sub: 'Claim Extraction',
     color: 'text-blue-400',
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/20',
   },
   {
-    id: 'ai-agent',
-    icon: Cpu,
-    label: 'n8n AI Agent',
-    sub: 'Skills Evaluation',
+    id: 'identity-agent',
+    icon: ScanSearch,
+    label: 'Identity Agent',
+    sub: '3-Way Name Check',
     color: 'text-indigo-400',
     bg: 'bg-indigo-500/10',
     border: 'border-indigo-500/20',
@@ -23,17 +23,26 @@ const systemNodes = [
   {
     id: 'github-agent',
     icon: Github,
-    label: 'Audit Agent',
-    sub: 'Code Verification',
+    label: 'Evidence Agent',
+    sub: 'GitHub Claim Audit',
     color: 'text-violet-400',
     bg: 'bg-violet-500/10',
     border: 'border-violet-500/20',
   },
   {
+    id: 'decision-agent',
+    icon: Cpu,
+    label: 'Decision Agent',
+    sub: 'Risk + Verdict',
+    color: 'text-fuchsia-400',
+    bg: 'bg-fuchsia-500/10',
+    border: 'border-fuchsia-500/20',
+  },
+  {
     id: 'blockchain',
     icon: ShieldCheck,
     label: 'On-Chain Proof',
-    sub: 'Immutable Hash',
+    sub: 'Tamper-Evident Hash',
     color: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/20',
@@ -41,7 +50,7 @@ const systemNodes = [
   {
     id: 'storage',
     icon: Database,
-    label: 'Verified Store',
+    label: 'Recruiter Console',
     sub: 'Decision Ready',
     color: 'text-amber-400',
     bg: 'bg-amber-500/10',
@@ -115,16 +124,16 @@ export function SystemFlow() {
           <p className="text-[11px] text-gray-300">pdfjs-dist coordinate parser</p>
         </div>
         <div className="text-center p-3 rounded-xl bg-gray-900/40 border border-gray-800/50">
-          <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">AI Logic</p>
-          <p className="text-[11px] text-gray-300">n8n + GPT-4o Agentic Flow</p>
+          <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Agentic Layer</p>
+          <p className="text-[11px] text-gray-300">Resume, identity, evidence, decision agents</p>
         </div>
         <div className="text-center p-3 rounded-xl bg-gray-900/40 border border-gray-800/50">
-          <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Verification</p>
-          <p className="text-[11px] text-gray-300">EVM Smart Contract (Sepolia)</p>
+          <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Evidence</p>
+          <p className="text-[11px] text-gray-300">Resume parsing + GitHub API + mismatch checks</p>
         </div>
         <div className="text-center p-3 rounded-xl bg-gray-900/40 border border-gray-800/50">
           <p className="text-[10px] text-gray-500 font-bold uppercase mb-1">Trust Model</p>
-          <p className="text-[11px] text-gray-300">DePIN-style Agent Signatures</p>
+          <p className="text-[11px] text-gray-300">Tamper-evident decision report anchored on-chain</p>
         </div>
       </div>
     </div>

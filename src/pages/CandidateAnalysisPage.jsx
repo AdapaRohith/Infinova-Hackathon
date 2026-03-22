@@ -11,6 +11,7 @@ import { Button } from '../components/ui/Button'
 import { Skeleton } from '../components/ui/Skeleton'
 import { Loader } from '../components/ui/Loader'
 import { ScoreBar } from '../components/ScoreBar'
+import { IdentityAlert } from '../components/IdentityAlert'
 
 const initialForm = {
   name: '',
@@ -180,6 +181,23 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
                 <p className="text-sm font-semibold text-white">AI Summary</p>
                 <p className="mt-2 text-sm text-gray-300 line-clamp-3">{result.analysis.summary}</p>
               </div>
+              {result.analysis.assessment && (
+                <div className="grid gap-3 md:grid-cols-3">
+                  <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Verdict</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{result.analysis.assessment.verdict}</p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Risk</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{result.analysis.assessment.riskLevel}</p>
+                  </div>
+                  <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
+                    <p className="text-[11px] uppercase tracking-wide text-gray-500">Confidence</p>
+                    <p className="mt-2 text-lg font-semibold text-white">{result.analysis.assessment.confidence}</p>
+                  </div>
+                </div>
+              )}
+              <IdentityAlert identityCheck={result.analysis.identityCheck} />
               <Button variant="secondary" onClick={() => navigate(`/report/${result.id}`)}>
                 Open AI Report
               </Button>

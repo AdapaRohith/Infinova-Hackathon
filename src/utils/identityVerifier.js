@@ -102,6 +102,8 @@ const compareTwoNames = (a, b) => {
   return 'MISMATCH'
 }
 
+const isMismatch = (value) => value === 'MISMATCH'
+
 /**
  * Extract the candidate's name from resume text.
  * Resumes almost always start with the person's name on the first line.
@@ -173,6 +175,12 @@ export const verifyIdentity = ({ formName, resumeText, githubProfile }) => {
     flags.push('resume_github_mismatch')
   }
 
+  const mismatchCount = Object.values(comparisons).filter(isMismatch).length
+  const allThreeDifferent = mismatchCount === 3
+  if (allThreeDifferent) {
+    flags.push('all_sources_mismatch')
+  }
+
   // Determine overall status
   let status
   let details
@@ -189,21 +197,26 @@ export const verifyIdentity = ({ formName, resumeText, githubProfile }) => {
     details = 'Not enough data for identity verification.'
   } else if (hasMismatch) {
     status = 'MISMATCH'
-    const parts = []
-    if (flags.includes('resume_name_mismatch')) {
-      parts.push(`Form name "${formName}" does not match resume name "${resumeName}"`)
+    if (allThreeDifferent) {
+      details =
+        `Strong identity warning: form name "${formName}" resume name "${resumeName}" and GitHub profile "${effectiveGithubName}" all point to different identities. This may indicate a false claim or someone else's profile/resume was submitted.`
+    } else {
+      const parts = []
+      if (flags.includes('resume_name_mismatch')) {
+        parts.push(`Form name "${formName}" does not match resume name "${resumeName}"`)
+      }
+      if (flags.includes('github_name_mismatch')) {
+        parts.push(
+          `Form name "${formName}" does not match GitHub profile "${effectiveGithubName}"`,
+        )
+      }
+      if (flags.includes('resume_github_mismatch')) {
+        parts.push(
+          `Resume name "${resumeName}" does not match GitHub profile "${effectiveGithubName}"`,
+        )
+      }
+      details = parts.join('. ') + '.'
     }
-    if (flags.includes('github_name_mismatch')) {
-      parts.push(
-        `Form name "${formName}" does not match GitHub profile "${effectiveGithubName}"`,
-      )
-    }
-    if (flags.includes('resume_github_mismatch')) {
-      parts.push(
-        `Resume name "${resumeName}" does not match GitHub profile "${effectiveGithubName}"`,
-      )
-    }
-    details = parts.join('. ') + '.'
   } else if (hasPartial) {
     status = 'PARTIAL'
     details =
@@ -224,5 +237,6 @@ export const verifyIdentity = ({ formName, resumeText, githubProfile }) => {
     githubName: effectiveGithubName,
     flags,
     comparisons,
+    allThreeDifferent,
   }
 }

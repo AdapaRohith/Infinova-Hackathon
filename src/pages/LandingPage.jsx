@@ -17,8 +17,8 @@ import { Card } from '../components/ui/Card'
 const features = [
   {
     icon: Brain,
-    title: 'AI Evaluation',
-    description: 'Autonomous assessment engine evaluates candidate capability from submitted profile data.',
+    title: 'Agentic Verification',
+    description: 'Multiple agents extract claims, cross-check identity, audit GitHub evidence, and issue a recruiter verdict.',
     gradient: 'from-indigo-500/20 to-violet-500/20',
   },
   {
@@ -38,7 +38,7 @@ const features = [
 const stats = [
   { icon: Sparkles, value: 'AI', label: 'Structured Evaluation', color: 'text-indigo-400', bg: 'bg-indigo-500/10' },
   { icon: Shield, value: 'Web3', label: 'On-chain Proof', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { icon: Zap, value: 'Trust', label: 'Verifiable Workflow', color: 'text-violet-400', bg: 'bg-violet-500/10' },
+  { icon: Zap, value: 'Audit', label: 'False Claim Detection', color: 'text-violet-400', bg: 'bg-violet-500/10' },
 ]
 
 const stagger = {
@@ -92,7 +92,7 @@ export function LandingPage() {
           </Motion.h1>
 
           <Motion.p variants={fadeUp} className="mt-5 max-w-lg text-base text-gray-300 md:text-lg">
-            AI-powered candidate evaluation with tamper-proof blockchain verification.
+            An agentic hiring trust engine that verifies identity, audits public code claims, and anchors tamper-proof reports on-chain.
           </Motion.p>
 
           <Motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
@@ -138,8 +138,8 @@ export function LandingPage() {
                 <span className="size-1.5 rounded-full bg-indigo-400 animate-pulse" />
                 Live Verification Status
               </p>
-              <p className="mt-2.5 text-sm leading-relaxed text-gray-300">AI score, proof hash, and verification status are generated after each analysis.</p>
-              <p className="mt-1 text-sm text-emerald-300/90">Status updates in real time from submitted candidate data.</p>
+              <p className="mt-2.5 text-sm leading-relaxed text-gray-300">Every analysis produces a recruiter verdict, evidence snapshot, mismatch warning, and blockchain proof.</p>
+              <p className="mt-1 text-sm text-emerald-300/90">Designed to expose fake claims, not just score resumes.</p>
             </Motion.div>
 
             <Motion.section
@@ -152,9 +152,9 @@ export function LandingPage() {
               <h3 className="text-sm font-semibold text-white">What this proof includes</h3>
               <ul className="mt-3 space-y-2.5 text-sm text-gray-300">
                 {[
-                  { color: 'bg-blue-400', text: 'Candidate identity metadata tied to AI evaluation output' },
-                  { color: 'bg-violet-400', text: 'Immutable hash + timestamp for independent verification' },
-                  { color: 'bg-emerald-400', text: 'On-chain status signal recruiters can trust at review time' },
+                  { color: 'bg-blue-400', text: '3-way identity check across form name, resume name, and GitHub profile' },
+                  { color: 'bg-violet-400', text: 'Evidence-backed claim audit against public GitHub data' },
+                  { color: 'bg-emerald-400', text: 'Immutable hash and timestamp for independent recruiter verification' },
                 ].map((item) => (
                   <li key={item.text} className="flex items-start gap-2.5">
                     <span className={`mt-1.5 size-1.5 rounded-full ${item.color} shrink-0`} aria-hidden="true" />

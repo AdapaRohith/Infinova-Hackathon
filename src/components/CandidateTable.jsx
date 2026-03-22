@@ -15,33 +15,47 @@ export function CandidateTable({ candidates, onViewReport }) {
   return (
     <Table>
       <TableHead>
-          <tr>
-            <th className="px-4 py-3 font-medium">Name</th>
-            <th className="px-4 py-3 font-medium">Score</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium">Action</th>
-          </tr>
+        <tr>
+          <th className="px-4 py-3 font-medium">Name</th>
+          <th className="px-4 py-3 font-medium">Score</th>
+          <th className="px-4 py-3 font-medium">Verdict</th>
+          <th className="px-4 py-3 font-medium">Status</th>
+          <th className="px-4 py-3 font-medium">Action</th>
+        </tr>
       </TableHead>
       <TableBody>
-          {candidates.map((candidate, index) => (
-            <tr key={candidate.id} className="hover:bg-gray-900/80">
-              <td className="px-4 py-3">{candidate.name}</td>
-              <td className="px-4 py-3">
-                <span className="rounded-lg bg-gray-800 px-2 py-1 text-xs text-white">#{index + 1}</span>
-                <span className="ml-2">{candidate.analysis?.score ?? '—'}</span>
-              </td>
-              <td className="px-4 py-3">
-                <Badge success={candidate.verification?.status === 'Verified on-chain'}>
-                  {candidate.verification?.status ? 'Verified' : 'Not Verified'}
-                </Badge>
-              </td>
-              <td className="px-4 py-3">
-                <Button variant="secondary" onClick={() => onViewReport(candidate)}>
-                  View Report
-                </Button>
-              </td>
-            </tr>
-          ))}
+        {candidates.map((candidate, index) => (
+          <tr key={candidate.id} className="hover:bg-gray-900/80">
+            <td className="px-4 py-3">{candidate.name}</td>
+            <td className="px-4 py-3">
+              <span className="rounded-lg bg-gray-800 px-2 py-1 text-xs text-white">#{index + 1}</span>
+              <span className="ml-2">{candidate.analysis?.score ?? '-'}</span>
+            </td>
+            <td className="px-4 py-3">
+              <span
+                className={`rounded-md px-2 py-1 text-xs font-semibold ${
+                  candidate.analysis?.assessment?.verdictTone === 'positive'
+                    ? 'bg-emerald-500/15 text-emerald-300'
+                    : candidate.analysis?.assessment?.verdictTone === 'negative'
+                      ? 'bg-red-500/15 text-red-300'
+                      : 'bg-amber-500/15 text-amber-200'
+                }`}
+              >
+                {candidate.analysis?.assessment?.verdict || 'Pending'}
+              </span>
+            </td>
+            <td className="px-4 py-3">
+              <Badge success={candidate.verification?.status === 'Verified on-chain'}>
+                {candidate.verification?.status ? 'Verified' : 'Not Verified'}
+              </Badge>
+            </td>
+            <td className="px-4 py-3">
+              <Button variant="secondary" onClick={() => onViewReport(candidate)}>
+                View Report
+              </Button>
+            </td>
+          </tr>
+        ))}
       </TableBody>
     </Table>
   )

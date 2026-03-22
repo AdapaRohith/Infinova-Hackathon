@@ -11,6 +11,8 @@ import { loadCandidates, saveCandidates } from './utils/storage'
 import { generateHash } from './utils/hash'
 import { storeHash } from './utils/blockchain'
 import { normalizeResumePayload } from './utils/resumeNormalizer'
+import { verifyIdentity } from './utils/identityVerifier'
+import { synthesizeCandidateAssessment } from './utils/analysisSynthesizer'
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -93,6 +95,7 @@ const fetchGitHubData = async (link) => {
     // Build a concise summary the AI can actually analyze
     return {
       username: profile.login,
+      login: profile.login,
       name: profile.name || '',
       bio: profile.bio || '',
       public_repos: profile.public_repos,
@@ -117,7 +120,7 @@ const fetchGitHubData = async (link) => {
   }
 }
 
-const verifyGitHubWithAI = async (link, skills, resumeText) => {
+const verifyGitHubWithAI = async (link, skills, resumeText, githubDataInput = null) => {
   // 🛡️ Validate and normalize link before making any API call
   let trimmedLink = String(link || '').trim()
 
@@ -139,7 +142,7 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
   console.log('Normalized GitHub link:', trimmedLink)
 
   // 🔍 Pre-fetch GitHub data so the AI doesn't need web search
-  const githubData = await fetchGitHubData(trimmedLink)
+  const githubData = githubDataInput || await fetchGitHubData(trimmedLink)
   console.log('GitHub API data fetched:', githubData ? `${githubData.public_repos} repos found` : 'failed')
 
   // Retry logic — try up to 2 times for transient failures
@@ -351,10 +354,37 @@ function App() {
     const aiInput = { ...normalized }
 
     // Start AI Analysis and GitHub Verification in parallel
-    const [aiReport, githubVerification] = await Promise.all([
+    const githubDataPromise = fetchGitHubData(normalized.link)
+    const [aiReport, githubData] = await Promise.all([
       analyzeCandidateWithAI(aiInput),
-      verifyGitHubWithAI(normalized.link, normalized.skills, normalized.resumeText)
+      githubDataPromise,
     ])
+
+    const [githubVerification, identityCheck] = await Promise.all([
+      verifyGitHubWithAI(normalized.link, normalized.skills, normalized.resumeText, githubData),
+      Promise.resolve(
+        verifyIdentity({
+          formName: normalized.name,
+          resumeText: normalized.resumeText,
+          githubProfile: githubData
+            ? {
+                name: githubData.name,
+                login: githubData.login || githubData.username,
+              }
+            : null,
+        }),
+      ),
+    ])
+
+    const assessment = synthesizeCandidateAssessment({
+      analysis: aiReport,
+      identityCheck,
+      githubVerification,
+      candidate: {
+        ...normalized,
+        analysis: aiReport,
+      },
+    })
 
     const candidate = {
       id: crypto.randomUUID(),
@@ -364,7 +394,9 @@ function App() {
         ...aiReport,
         // Merge AI skills with extracted skills if AI didn't provide any
         skills: aiReport.skills?.length ? aiReport.skills : normalized.skills,
-        githubVerification: githubVerification || { score: 0, status: 'UNAVAILABLE', details: 'GitHub verification could not be completed at this time. Please retry the analysis.', summary: '' }
+        githubVerification: githubVerification || { score: 0, status: 'UNAVAILABLE', details: 'GitHub verification could not be completed at this time. Please retry the analysis.', summary: '' },
+        identityCheck,
+        assessment,
       },
       verification: null,
     }
