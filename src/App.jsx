@@ -89,7 +89,7 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
       score: data.github_score || 0,
       status: data.verdict || 'PENDING', // STRONG, AVERAGE, WEAK
       details: data.reason || 'Verification complete.',
-      summary: data.detailed_summary || ''
+      summary: data.detailed_summary || data.reason || '' // Fallback to reason if summary is missing
     }
 
   } catch (error) {
