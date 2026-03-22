@@ -114,7 +114,10 @@ export function ReportCard({ candidate }) {
                       : 'bg-amber-500/20 text-amber-400'
                 }`}>
                   {candidate.analysis.githubVerification.status === 'STRONG' ? 'Claims Verified' : 
-                   candidate.analysis.githubVerification.status === 'WEAK' ? 'False/Weak Claims' : 'Manual Review'}
+                   candidate.analysis.githubVerification.status === 'WEAK' ? 'False/Weak Claims' :
+                   candidate.analysis.githubVerification.status === 'NO_LINK' ? 'No Link Provided' :
+                   ['WEBHOOK_ERROR', 'EMPTY_RESPONSE', 'UNREACHABLE', 'UNAVAILABLE'].includes(candidate.analysis.githubVerification.status) ? 'Service Unavailable' :
+                   'Manual Review'}
                 </span>
               </div>
               <div className="text-right">

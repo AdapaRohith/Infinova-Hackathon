@@ -20,22 +20,22 @@ const reducer = (state, action) => {
       return state.map((candidate) =>
         candidate.id === action.payload.id
           ? {
-              ...candidate,
-              verification: {
-                hash: action.payload.hash,
-                timestamp: action.payload.timestamp,
-                txHash: action.payload.txHash,
-                status: 'Verified on-chain',
-                history: [
-                  ...(candidate.verification?.history ?? []),
-                  {
-                    hash: action.payload.hash,
-                    timestamp: action.payload.timestamp,
-                    txHash: action.payload.txHash,
-                  },
-                ],
-              },
-            }
+            ...candidate,
+            verification: {
+              hash: action.payload.hash,
+              timestamp: action.payload.timestamp,
+              txHash: action.payload.txHash,
+              status: 'Verified on-chain',
+              history: [
+                ...(candidate.verification?.history ?? []),
+                {
+                  hash: action.payload.hash,
+                  timestamp: action.payload.timestamp,
+                  txHash: action.payload.txHash,
+                },
+              ],
+            },
+          }
           : candidate,
       )
     default:
@@ -67,65 +67,186 @@ const toStructuredAnalysis = (rawText = '') => {
   }
 }
 
-const verifyGitHubWithAI = async (link, skills, resumeText) => {
-  console.log('Sending GitHub link to n8n verify-github webhook', link)
-
+// 🔍 Fetch real GitHub profile + repos via the free GitHub API
+const fetchGitHubData = async (link) => {
   try {
-    const res = await fetch('https://n8n.avlokai.com/webhook/verify-github', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ link, skills, resumeText }),
-    })
+    // Extract username from GitHub URL (handles github.com/username and github.com/username/...)
+    const match = String(link).match(/github\.com\/([a-zA-Z0-9_-]+)/i)
+    if (!match) return null
 
-    if (!res.ok) return null
+    const username = match[1]
+    console.log('Fetching GitHub data for:', username)
 
-    const rawBody = await res.text()
-    if (!rawBody?.trim()) return null
+    const [profileRes, reposRes] = await Promise.all([
+      fetch(`https://api.github.com/users/${username}`),
+      fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=15`)
+    ])
 
-    let rawData = JSON.parse(rawBody)
-    let data = Array.isArray(rawData) ? rawData[0] : rawData
-
-    // 🛡️ Super-Robust Parsing: Try every possible path n8n might use for AI output
-    let aiText = '';
-    if (typeof data.output === 'string') {
-      aiText = data.output;
-    } else if (data.output?.[0]?.text) {
-      aiText = data.output[0].text;
-    } else if (data.output?.[0]?.content?.[0]?.text) {
-      aiText = data.output[0].content[0].text;
-    } else if (data.text) {
-      aiText = data.text;
+    if (!profileRes.ok) {
+      console.warn('GitHub profile API returned', profileRes.status)
+      return null
     }
 
-    if (aiText && typeof aiText === 'string') {
-      try {
-        // Find the first '{' and last '}' to extract the JSON block if the AI added extra text
-        const start = aiText.indexOf('{');
-        const end = aiText.lastIndexOf('}');
-        if (start !== -1 && end !== -1) {
-          const jsonStr = aiText.substring(start, end + 1);
-          const parsed = JSON.parse(jsonStr);
-          data = { ...data, ...parsed };
-        }
-      } catch (e) {
-        console.warn('AI Output was not valid JSON:', aiText);
-      }
-    }
-    
-    // Mapping your n8n output schema to the frontend state
+    const profile = await profileRes.json()
+    const repos = reposRes.ok ? await reposRes.json() : []
+
+    // Build a concise summary the AI can actually analyze
     return {
-      score: data.github_score ?? 0,
-      status: data.verdict || 'PENDING', 
-      details: data.reason || 'Verification complete.',
-      summary: data.detailed_summary || data.reason || '' 
+      username: profile.login,
+      name: profile.name || '',
+      bio: profile.bio || '',
+      public_repos: profile.public_repos,
+      followers: profile.followers,
+      following: profile.following,
+      created_at: profile.created_at,
+      updated_at: profile.updated_at,
+      repos: repos.map(r => ({
+        name: r.name,
+        description: r.description || '',
+        language: r.language || 'Unknown',
+        stars: r.stargazers_count,
+        forks: r.forks_count,
+        updated_at: r.updated_at,
+        topics: r.topics || [],
+        homepage: r.homepage || ''
+      }))
     }
-
-  } catch (error) {
-    console.error('GitHub verification failed:', error)
+  } catch (err) {
+    console.warn('Failed to fetch GitHub data:', err)
     return null
   }
+}
+
+const verifyGitHubWithAI = async (link, skills, resumeText) => {
+  // 🛡️ Validate and normalize link before making any API call
+  let trimmedLink = String(link || '').trim()
+
+  // Auto-prepend https:// if user entered a bare domain like github.com/username
+  if (trimmedLink && !trimmedLink.startsWith('http')) {
+    trimmedLink = 'https://' + trimmedLink
+  }
+
+  if (!trimmedLink || trimmedLink.length < 10) {
+    console.warn('No valid link provided for GitHub verification:', link)
+    return {
+      score: 0,
+      status: 'NO_LINK',
+      details: 'No valid GitHub/portfolio link was provided. Please enter a valid URL to enable autonomous verification.',
+      summary: ''
+    }
+  }
+
+  console.log('Normalized GitHub link:', trimmedLink)
+
+  // 🔍 Pre-fetch GitHub data so the AI doesn't need web search
+  const githubData = await fetchGitHubData(trimmedLink)
+  console.log('GitHub API data fetched:', githubData ? `${githubData.public_repos} repos found` : 'failed')
+
+  // Retry logic — try up to 2 times for transient failures
+  const MAX_RETRIES = 2
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 30000) // 30s timeout
+
+      const res = await fetch('https://n8n.avlokai.com/webhook/verify-github', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ link: trimmedLink, skills, resumeText, githubData }),
+        signal: controller.signal,
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!res.ok) {
+        console.warn(`verify-github webhook returned status ${res.status} (attempt ${attempt}/${MAX_RETRIES})`)
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 1500 * attempt))
+          continue
+        }
+        return {
+          score: 0,
+          status: 'WEBHOOK_ERROR',
+          details: `Verification service returned an error (HTTP ${res.status}). The GitHub audit could not be completed — please retry or verify manually.`,
+          summary: ''
+        }
+      }
+
+      const rawBody = await res.text()
+      if (!rawBody?.trim()) {
+        console.warn(`verify-github webhook returned empty body (attempt ${attempt}/${MAX_RETRIES})`)
+        if (attempt < MAX_RETRIES) {
+          await new Promise(r => setTimeout(r, 1500 * attempt))
+          continue
+        }
+        return {
+          score: 0,
+          status: 'EMPTY_RESPONSE',
+          details: 'Verification service returned an empty response. The n8n workflow may not be configured to respond. Please check your webhook setup.',
+          summary: ''
+        }
+      }
+
+      let rawData = JSON.parse(rawBody)
+      let data = Array.isArray(rawData) ? rawData[0] : rawData
+
+      // 🛡️ Super-Robust Parsing: Try every possible path n8n might use for AI output
+      let aiText = '';
+      if (typeof data.output === 'string') {
+        aiText = data.output;
+      } else if (data.output?.[0]?.text) {
+        aiText = data.output[0].text;
+      } else if (data.output?.[0]?.content?.[0]?.text) {
+        aiText = data.output[0].content[0].text;
+      } else if (data.text) {
+        aiText = data.text;
+      }
+
+      if (aiText && typeof aiText === 'string') {
+        try {
+          const start = aiText.indexOf('{');
+          const end = aiText.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            const jsonStr = aiText.substring(start, end + 1);
+            const parsed = JSON.parse(jsonStr);
+            data = { ...data, ...parsed };
+          }
+        } catch (e) {
+          console.warn('AI Output was not valid JSON:', aiText);
+        }
+      }
+
+      // Mapping your n8n output schema to the frontend state
+      return {
+        score: data.github_score ?? 0,
+        status: data.verdict || 'PENDING',
+        details: data.reason || 'Verification complete.',
+        summary: data.detailed_summary || data.reason || ''
+      }
+
+    } catch (error) {
+      const isTimeout = error.name === 'AbortError'
+      console.error(`GitHub verification failed (attempt ${attempt}/${MAX_RETRIES}):`, error)
+
+      if (attempt < MAX_RETRIES) {
+        await new Promise(r => setTimeout(r, 1500 * attempt))
+        continue
+      }
+
+      return {
+        score: 0,
+        status: 'UNREACHABLE',
+        details: isTimeout
+          ? 'Verification service timed out. The n8n webhook took too long to respond — please check that your workflow is active and retry.'
+          : 'Could not connect to the verification service. Please check that the n8n webhook is active and your network connection is stable.',
+        summary: ''
+      }
+    }
+  }
+
+  return null
 }
 
 
@@ -201,87 +322,87 @@ function App() {
     saveCandidates(candidates)
   }, [candidates])
 
- const handleAnalyzeCandidate = async (payload) => {
-  await new Promise((resolve) => {
-    setTimeout(resolve, 1000)
-  })
+  const handleAnalyzeCandidate = async (payload) => {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000)
+    })
 
- let normalized
- try {
-  normalized = await normalizeResumePayload(payload)
- } catch (error) {
-  console.error('Resume normalization failed, using direct form payload.', error)
-  normalized = {
-    name: payload.name,
-    email: payload.email,
-    link: payload.link,
-    resumeName: payload.resumeName,
-     projects: payload.link ? [payload.link] : [],
-    skills: [],
-     experience: '',
-    yearsOfExperience: 0,
-    projectHighlights: payload.link ? [`Project link: ${payload.link}`] : [],
-    education: [],
-    certifications: [],
-    resumeText: '',
+    let normalized
+    try {
+      normalized = await normalizeResumePayload(payload)
+    } catch (error) {
+      console.error('Resume normalization failed, using direct form payload.', error)
+      normalized = {
+        name: payload.name,
+        email: payload.email,
+        link: payload.link,
+        resumeName: payload.resumeName,
+        projects: payload.link ? [payload.link] : [],
+        skills: [],
+        experience: '',
+        yearsOfExperience: 0,
+        projectHighlights: payload.link ? [`Project link: ${payload.link}`] : [],
+        education: [],
+        certifications: [],
+        resumeText: '',
+      }
+    }
+
+    const aiInput = { ...normalized }
+
+    // Start AI Analysis and GitHub Verification in parallel
+    const [aiReport, githubVerification] = await Promise.all([
+      analyzeCandidateWithAI(aiInput),
+      verifyGitHubWithAI(normalized.link, normalized.skills, normalized.resumeText)
+    ])
+
+    const candidate = {
+      id: crypto.randomUUID(),
+      ...normalized,
+      createdAt: new Date().toISOString(),
+      analysis: {
+        ...aiReport,
+        // Merge AI skills with extracted skills if AI didn't provide any
+        skills: aiReport.skills?.length ? aiReport.skills : normalized.skills,
+        githubVerification: githubVerification || { score: 0, status: 'UNAVAILABLE', details: 'GitHub verification could not be completed at this time. Please retry the analysis.', summary: '' }
+      },
+      verification: null,
+    }
+
+    dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
+    return candidate
   }
- }
-
- const aiInput = { ...normalized }
-
- // Start AI Analysis and GitHub Verification in parallel
- const [aiReport, githubVerification] = await Promise.all([
-   analyzeCandidateWithAI(aiInput),
-   verifyGitHubWithAI(normalized.link, normalized.skills, normalized.resumeText)
- ])
-
-  const candidate = {
-    id: crypto.randomUUID(),
-    ...normalized,
-    createdAt: new Date().toISOString(),
-    analysis: {
-      ...aiReport,
-      // Merge AI skills with extracted skills if AI didn't provide any
-      skills: aiReport.skills?.length ? aiReport.skills : normalized.skills,
-      githubVerification: githubVerification || { status: 'Manual verification required', details: 'Scraper agent could not reach the provided link.' }
-    },
-    verification: null,
-  }
-
-  dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
-  return candidate
-}
 
 
-const handleGenerateProof = async (candidateId, onStatusChange) => {
-  const candidate = candidates.find((item) => item.id === candidateId)
-  if (!candidate) return null
+  const handleGenerateProof = async (candidateId, onStatusChange) => {
+    const candidate = candidates.find((item) => item.id === candidateId)
+    if (!candidate) return null
 
-  try {
-    const hash = generateHash(candidate.analysis)
+    try {
+      const hash = generateHash(candidate.analysis)
 
-    const tx = await storeHash(candidateId, hash, onStatusChange)
+      const tx = await storeHash(candidateId, hash, onStatusChange)
 
-    dispatch({
-      type: 'ADD_BLOCKCHAIN_PROOF',
-      payload: {
-        id: candidateId,
+      dispatch({
+        type: 'ADD_BLOCKCHAIN_PROOF',
+        payload: {
+          id: candidateId,
+          hash,
+          txHash: tx.txHash,
+          timestamp: tx.timestamp,
+        },
+      })
+
+      return {
         hash,
         txHash: tx.txHash,
         timestamp: tx.timestamp,
-      },
-    })
-
-    return {
-      hash,
-      txHash: tx.txHash,
-      timestamp: tx.timestamp,
+      }
+    } catch (error) {
+      console.error('Blockchain error:', error)
+      throw error
     }
-  } catch (error) {
-    console.error('Blockchain error:', error)
-    throw error
   }
-}
 
 
   return (
