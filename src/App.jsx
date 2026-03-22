@@ -13,6 +13,7 @@ import { storeHash } from './utils/blockchain'
 import { normalizeResumePayload } from './utils/resumeNormalizer'
 import { verifyIdentity } from './utils/identityVerifier'
 import { synthesizeCandidateAssessment } from './utils/analysisSynthesizer'
+import { deriveAttestationId } from './utils/attestationIdentity'
 
 const reducer = (state, action) => {
   switch (action.type) {
@@ -391,6 +392,7 @@ function App() {
     const candidate = {
       id: crypto.randomUUID(),
       ...normalized,
+      attestationId: deriveAttestationId(normalized.email),
       createdAt: new Date().toISOString(),
       analysis: {
         ...aiReport,
@@ -414,13 +416,15 @@ function App() {
 
     try {
       const hash = generateHash(candidate.analysis)
+      const attestationId = candidate.attestationId || deriveAttestationId(candidate.email, candidate.id)
 
-      const tx = await storeHash(candidateId, hash, onStatusChange)
+      const tx = await storeHash(attestationId, hash, onStatusChange)
 
       dispatch({
         type: 'ADD_BLOCKCHAIN_PROOF',
         payload: {
           id: candidateId,
+          attestationId,
           hash,
           txHash: tx.txHash,
           timestamp: tx.timestamp,
@@ -428,6 +432,7 @@ function App() {
       })
 
       return {
+        attestationId,
         hash,
         txHash: tx.txHash,
         timestamp: tx.timestamp,

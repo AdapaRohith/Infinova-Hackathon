@@ -61,8 +61,8 @@ export function VerificationPage({ candidates }) {
 
     try {
       const [isValid, latestAttestation] = await Promise.all([
-        verifyHash(match.id, trimmedHash),
-        getLatestAttestation(match.id),
+        verifyHash(match.attestationId || match.id, trimmedHash),
+        getLatestAttestation(match.attestationId || match.id),
       ])
 
       if (!isValid) {
@@ -210,7 +210,7 @@ export function VerificationPage({ candidates }) {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Candidate ID</p>
-                <p className="mt-2 break-all font-mono text-sm text-gray-200">{result.id}</p>
+                <p className="mt-2 break-all font-mono text-sm text-gray-200">{result.attestationId || result.id}</p>
               </div>
               <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">On-Chain Versions</p>

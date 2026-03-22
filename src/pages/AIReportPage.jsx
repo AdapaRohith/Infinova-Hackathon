@@ -230,7 +230,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
               className="mt-5"
             >
               <BlockchainProofCard
-                candidateId={candidate.id}
+                candidateId={candidate.attestationId || candidate.id}
                 hash={candidate.verification?.hash}
                 txHash={activeTxHash}
                 timestamp={candidate.verification?.timestamp}
