@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Navbar } from './components/Navbar'
 import { LandingPage } from './pages/LandingPage'
@@ -191,6 +191,11 @@ const analyzeCandidateWithAI = async (payload) => {
 
 function App() {
   const [candidates, dispatch] = useReducer(reducer, [], loadCandidates)
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
 
   useEffect(() => {
     saveCandidates(candidates)
@@ -282,7 +287,7 @@ const handleGenerateProof = async (candidateId, onStatusChange) => {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
-      <main className="mx-auto max-w-6xl px-6 pt-8">
+      <main className="mx-auto max-w-6xl px-6 pt-12">
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route

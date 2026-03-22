@@ -5,14 +5,14 @@ export function Modal({ open, title, onClose, children }) {
     <AnimatePresence>
       {open ? (
         <Motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/75 p-4 sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
         >
           <Motion.div
-            className="w-full max-w-4xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6 shadow-xl backdrop-blur"
+            className="my-auto w-full max-w-4xl rounded-2xl border border-gray-800 bg-gray-900/95 p-6 shadow-xl backdrop-blur sm:my-8"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 20, opacity: 0 }}
