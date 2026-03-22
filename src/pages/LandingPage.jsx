@@ -7,6 +7,7 @@ import {
 import { Link } from 'react-router-dom'
 import { FeatureCard } from '../components/FeatureCard'
 import { FlowStepper } from '../components/FlowStepper'
+import { SystemFlow } from '../components/SystemFlow'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 
@@ -120,7 +121,13 @@ export function LandingPage() {
         </Motion.div>
       </section>
 
-      <FlowStepper currentStep={1} />
+      <section>
+        <div className="mb-8">
+          <h2 className="text-3xl font-semibold text-white">Interactive Workflow</h2>
+          <p className="mt-2 text-gray-400">Step-by-step guide to using the Proof-of-Workforce platform.</p>
+        </div>
+        <FlowStepper currentStep={1} />
+      </section>
 
       <section>
         <div className="mb-8">
@@ -137,9 +144,9 @@ export function LandingPage() {
       <section>
         <div className="mb-8">
           <h2 className="text-3xl font-semibold text-white">System Flow</h2>
-          <p className="mt-2 text-gray-400">From upload to immutable trust proof in four clear steps.</p>
+          <p className="mt-2 text-gray-400">The technical architecture that powers our autonomous trust engine.</p>
         </div>
-        <FlowStepper currentStep={1} />
+        <SystemFlow />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
