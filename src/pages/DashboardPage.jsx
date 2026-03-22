@@ -11,6 +11,7 @@ export function DashboardPage({ candidates, onClearCandidates }) {
   const [minScore, setMinScore] = useState(0)
   const [maxScore, setMaxScore] = useState(100)
   const [verifiedOnly, setVerifiedOnly] = useState(false)
+  const [selectedSkill, setSelectedSkill] = useState('')
   const [selectedCandidate, setSelectedCandidate] = useState(null)
 
   const handleClearDashboard = () => {
@@ -19,19 +20,30 @@ export function DashboardPage({ candidates, onClearCandidates }) {
     toast.success('Dashboard cleared')
   }
 
+  const availableSkills = useMemo(
+    () =>
+      [...new Set(
+        candidates.flatMap((candidate) => candidate.analysis?.skills || candidate.skills || []),
+      )].sort((a, b) => a.localeCompare(b)),
+    [candidates],
+  )
+
   const filtered = useMemo(
     () =>
       candidates.filter((candidate) => {
         const score = candidate.analysis?.score ?? 0
         const verified = candidate.verification?.status === 'Verified on-chain'
+        const matchedSkills = candidate.analysis?.skills || candidate.skills || []
+        const matchesSkill = !selectedSkill || matchedSkills.includes(selectedSkill)
 
         return (
           score >= Number(minScore) &&
           score <= Number(maxScore) &&
-          (!verifiedOnly || verified)
+          (!verifiedOnly || verified) &&
+          matchesSkill
         )
       }),
-    [candidates, maxScore, minScore, verifiedOnly],
+    [candidates, maxScore, minScore, selectedSkill, verifiedOnly],
   )
 
   const stats = useMemo(() => {
@@ -113,6 +125,21 @@ export function DashboardPage({ candidates, onClearCandidates }) {
             value={maxScore}
             onChange={(event) => setMaxScore(event.target.value)}
           />
+          <label className="flex flex-col gap-2 text-sm text-gray-300">
+            <span>Matched Skill</span>
+            <select
+              value={selectedSkill}
+              onChange={(event) => setSelectedSkill(event.target.value)}
+              className="rounded-2xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300 outline-none transition focus:border-indigo-400/60"
+            >
+              <option value="">All skills</option>
+              {availableSkills.map((skill) => (
+                <option key={skill} value={skill}>
+                  {skill}
+                </option>
+              ))}
+            </select>
+          </label>
           <label className="flex items-end gap-3 rounded-2xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-gray-300 md:col-span-2">
             <input
               type="checkbox"
