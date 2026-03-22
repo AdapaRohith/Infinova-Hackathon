@@ -21,9 +21,10 @@ const initialForm = {
   resumeFile: null,
 }
 
-export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
+export function CandidateAnalysisPage({ onAnalyzeCandidate, onGenerateProof }) {
   const [form, setForm] = useState(initialForm)
   const [loading, setLoading] = useState(false)
+  const [proofLoading, setProofLoading] = useState(false)
   const [result, setResult] = useState(null)
   const navigate = useNavigate()
 
@@ -49,6 +50,47 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
       toast.error(error?.message || 'Real AI analysis failed. Verify your n8n webhook is active and reachable.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGenerateProof = async () => {
+    if (!result) return
+
+    setProofLoading(true)
+
+    try {
+      const proof = await onGenerateProof?.(result.id)
+      if (proof) {
+        setResult((prev) =>
+          prev
+            ? {
+                ...prev,
+                verification: {
+                  ...(prev.verification || {}),
+                  hash: proof.hash,
+                  txHash: proof.txHash,
+                  timestamp: proof.timestamp,
+                  status: 'Verified on-chain',
+                  history: [
+                    ...((prev.verification?.history || []).filter(
+                      (item) => item.hash !== proof.hash || item.txHash !== proof.txHash,
+                    )),
+                    {
+                      hash: proof.hash,
+                      txHash: proof.txHash,
+                      timestamp: proof.timestamp,
+                    },
+                  ],
+                },
+              }
+            : prev,
+        )
+        toast.success('Blockchain proof generated')
+      }
+    } catch (error) {
+      toast.error(error?.message || 'Blockchain proof generation failed.')
+    } finally {
+      setProofLoading(false)
     }
   }
 
@@ -198,9 +240,25 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
                 </div>
               )}
               <IdentityAlert identityCheck={result.analysis.identityCheck} />
-              <Button variant="secondary" onClick={() => navigate(`/report/${result.id}`)}>
-                Open AI Report
-              </Button>
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => navigate(`/report/${result.id}`)}
+                >
+                  Open AI Report
+                </Button>
+                <Button
+                  variant={result.verification?.status ? 'success' : 'primary'}
+                  disabled={proofLoading}
+                  onClick={handleGenerateProof}
+                >
+                  {proofLoading
+                    ? 'Generating Proof...'
+                    : result.verification?.status
+                      ? 'Regenerate Proof'
+                      : 'Generate Proof'}
+                </Button>
+              </div>
             </Motion.div>
           ) : null}
 

@@ -8,8 +8,8 @@ export function VerificationResultBanner({ status = 'idle' }) {
   const config =
     status === 'verified'
       ? {
-          title: '✅ VERIFIED',
-          message: 'This report matches the blockchain proof',
+          title: 'VERIFIED ON-CHAIN',
+          message: 'This hiring report still matches the attestation stored on the blockchain',
           icon: <CheckCircle2 className="size-8 text-emerald-300" />,
           classes: 'border-emerald-500/40 bg-emerald-500/10 shadow-emerald-500/20',
           titleClass: 'text-4xl font-extrabold tracking-wide text-emerald-300',
@@ -17,16 +17,16 @@ export function VerificationResultBanner({ status = 'idle' }) {
         }
       : status === 'pending'
         ? {
-            title: 'VERIFYING...',
-            message: 'Checking this report against the blockchain record',
+            title: 'VERIFYING ATTESTATION',
+            message: 'Checking this report hash against the blockchain record',
             icon: <ShieldAlert className="size-8 animate-pulse text-amber-200" />,
             classes: 'border-amber-500/40 bg-amber-500/10 shadow-amber-500/10',
             titleClass: 'text-3xl font-bold tracking-wide text-amber-200',
             messageClass: 'text-amber-100/90',
           }
         : {
-            title: '❌ TAMPERED',
-            message: 'This report has been altered and does not match the original proof',
+            title: 'TAMPERED',
+            message: 'This report no longer matches the original blockchain attestation',
             icon: <XCircle className="size-8 text-red-300" />,
             classes: 'border-red-500/40 bg-red-500/10 shadow-red-500/20',
             titleClass: 'text-4xl font-extrabold tracking-wide text-red-300',

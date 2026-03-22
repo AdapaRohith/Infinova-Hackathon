@@ -1,7 +1,12 @@
 import { ethers } from 'ethers'
 
-const contractAddress = '0x90Dd104d7eCce18929d0A8a069B9b2a0BB562666'
-const sepoliaChainId = 11155111n
+export const contractAddress = '0x90Dd104d7eCce18929d0A8a069B9b2a0BB562666'
+export const sepoliaChainId = 11155111n
+export const blockchainNetworkName = 'Sepolia'
+export const contractExplorerUrl = `https://sepolia.etherscan.io/address/${contractAddress}`
+
+export const getTxExplorerUrl = (txHash) =>
+  txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : ''
 
 const abi = [
   {
@@ -197,4 +202,32 @@ export const storeHash = async (candidateId, hash, onStatusChange) => {
 export const verifyHash = async (candidateId, hash) => {
   const contract = await getReadContract()
   return contract.verifyRecord(candidateId, hash)
+}
+
+export const getAttestationRecordCount = async (candidateId) => {
+  const contract = await getReadContract()
+  const count = await contract.getRecordCount(candidateId)
+  return Number(count)
+}
+
+export const getAttestationRecord = async (candidateId, index) => {
+  const contract = await getReadContract()
+  const [hash, timestamp] = await contract.getRecord(candidateId, index)
+
+  return {
+    hash,
+    timestamp: Number(timestamp),
+  }
+}
+
+export const getLatestAttestation = async (candidateId) => {
+  const count = await getAttestationRecordCount(candidateId)
+  if (!count) return null
+
+  const latestRecord = await getAttestationRecord(candidateId, count - 1)
+
+  return {
+    ...latestRecord,
+    count,
+  }
 }

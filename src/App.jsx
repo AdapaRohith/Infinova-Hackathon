@@ -452,7 +452,10 @@ function App() {
           <Route
             path="/analyze"
             element={
-              <CandidateAnalysisPage onAnalyzeCandidate={handleAnalyzeCandidate} />
+              <CandidateAnalysisPage
+                onAnalyzeCandidate={handleAnalyzeCandidate}
+                onGenerateProof={handleGenerateProof}
+              />
             }
           />
           <Route

@@ -3,6 +3,7 @@ import { Card } from './ui/Card'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
 import { formatDateTime } from '../utils/helpers'
+import { blockchainNetworkName, contractAddress, contractExplorerUrl, getTxExplorerUrl } from '../utils/blockchain'
 
 const shortenHash = (value) => {
   if (!value) return ''
@@ -11,6 +12,7 @@ const shortenHash = (value) => {
 }
 
 export function BlockchainProofCard({
+  candidateId,
   hash,
   txHash,
   timestamp,
@@ -20,7 +22,7 @@ export function BlockchainProofCard({
   copied,
   agentSignature,
 }) {
-  const etherscanUrl = txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : ''
+  const etherscanUrl = getTxExplorerUrl(txHash)
   const proofPending = !hash && !txHash
   const displayedHash = shortenHash(hash)
   const displayedTxHash = shortenHash(txHash)
@@ -52,7 +54,7 @@ export function BlockchainProofCard({
     <Card className={`rounded-2xl p-6 shadow-lg ${statusConfig.cardGlow}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-white">Blockchain Proof</h3>
+          <h3 className="text-lg font-semibold text-white">On-Chain Hiring Attestation</h3>
           {agentSignature && (
             <div className="flex items-center gap-1 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
               <ShieldCheck className="size-3" />
@@ -127,6 +129,33 @@ export function BlockchainProofCard({
             <ExternalLink className="size-3.5" />
             {etherscanUrl ? 'View on Etherscan' : 'Etherscan available after proof'}
           </a>
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
+          <p className="text-xs text-gray-400">Candidate ID</p>
+          <p className="mt-2 break-all text-sm font-mono text-gray-200">{candidateId || 'Pending candidate'}</p>
+        </div>
+        <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
+          <p className="text-xs text-gray-400">Network</p>
+          <p className="mt-2 text-sm text-gray-200">{blockchainNetworkName} Testnet</p>
+        </div>
+        <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
+          <p className="text-xs text-gray-400">Smart Contract</p>
+          <a
+            href={contractExplorerUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200"
+          >
+            <span className="font-mono">{shortenHash(contractAddress)}</span>
+            <ExternalLink className="size-3.5" />
+          </a>
+        </div>
+        <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
+          <p className="text-xs text-gray-400">Attestation Type</p>
+          <p className="mt-2 text-sm text-gray-200">Tamper-evident hiring report hash</p>
         </div>
       </div>
     </Card>
