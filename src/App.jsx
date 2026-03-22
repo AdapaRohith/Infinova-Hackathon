@@ -88,8 +88,10 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
     return {
       score: data.github_score || 0,
       status: data.verdict || 'PENDING', // STRONG, AVERAGE, WEAK
-      details: data.reason || 'Verification complete.'
+      details: data.reason || 'Verification complete.',
+      summary: data.detailed_summary || ''
     }
+
   } catch (error) {
     console.error('GitHub verification failed:', error)
     return null

@@ -129,7 +129,16 @@ export function ReportCard({ candidate }) {
             <p className="mt-2 text-sm text-gray-300 italic">
               " {candidate.analysis.githubVerification.details} "
             </p>
+            {candidate.analysis.githubVerification.summary && (
+              <div className="mt-3 border-t border-gray-800 pt-3">
+                <p className="text-[11px] font-semibold uppercase text-gray-500 mb-1">Audit Summary</p>
+                <p className="text-sm text-gray-400 leading-relaxed">
+                  {candidate.analysis.githubVerification.summary}
+                </p>
+              </div>
+            )}
           </div>
+
         )}
 
 
