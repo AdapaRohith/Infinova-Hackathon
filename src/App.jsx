@@ -87,22 +87,37 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
     let rawData = JSON.parse(rawBody)
     let data = Array.isArray(rawData) ? rawData[0] : rawData
 
-    // 🛡️ Robust Parsing: If n8n sends the raw OpenAI node output, find the JSON inside the text
-    const aiText = data.output?.[0]?.text || data.text || '';
+    // 🛡️ Super-Robust Parsing: Try every possible path n8n might use for AI output
+    let aiText = '';
+    if (typeof data.output === 'string') {
+      aiText = data.output;
+    } else if (data.output?.[0]?.text) {
+      aiText = data.output[0].text;
+    } else if (data.output?.[0]?.content?.[0]?.text) {
+      aiText = data.output[0].content[0].text;
+    } else if (data.text) {
+      aiText = data.text;
+    }
+
     if (aiText && typeof aiText === 'string') {
       try {
-        const cleaned = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
-        const parsed = JSON.parse(cleaned);
-        data = { ...data, ...parsed };
+        // Find the first '{' and last '}' to extract the JSON block if the AI added extra text
+        const start = aiText.indexOf('{');
+        const end = aiText.lastIndexOf('}');
+        if (start !== -1 && end !== -1) {
+          const jsonStr = aiText.substring(start, end + 1);
+          const parsed = JSON.parse(jsonStr);
+          data = { ...data, ...parsed };
+        }
       } catch (e) {
-        console.warn('Could not parse AI text as JSON, using raw data');
+        console.warn('AI Output was not valid JSON:', aiText);
       }
     }
     
     // Mapping your n8n output schema to the frontend state
     return {
-      score: data.github_score || 0,
-      status: data.verdict || 'PENDING', // STRONG, AVERAGE, WEAK
+      score: data.github_score ?? 0,
+      status: data.verdict || 'PENDING', 
       details: data.reason || 'Verification complete.',
       summary: data.detailed_summary || data.reason || '' 
     }
