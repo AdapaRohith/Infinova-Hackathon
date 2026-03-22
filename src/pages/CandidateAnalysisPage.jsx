@@ -147,10 +147,10 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
                   </p>
                   {result.analysis.githubVerification && (
                     <p className={`text-[11px] font-medium flex items-center gap-1 ${
-                      result.analysis.githubVerification.status === 'Verified' ? 'text-indigo-300' : 'text-amber-300'
+                      result.analysis.githubVerification.status === 'STRONG' ? 'text-emerald-400' : 'text-amber-400'
                     }`}>
-                      {result.analysis.githubVerification.status === 'Verified' ? <ShieldCheck className="size-3" /> : <ShieldAlert className="size-3" />}
-                      {result.analysis.githubVerification.status === 'Verified' ? 'Autonomous GitHub Verification: Pass' : 'GitHub Verification: Partial/Manual Required'}
+                      {result.analysis.githubVerification.status === 'STRONG' ? <ShieldCheck className="size-3" /> : <ShieldAlert className="size-3" />}
+                      {result.analysis.githubVerification.status === 'STRONG' ? 'Autonomous GitHub Verification: Pass' : 'GitHub Verification: Manual Review Suggested'}
                     </p>
                   )}
                 </div>
