@@ -81,15 +81,30 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
 
     if (!res.ok) return null
 
-    const rawData = await res.json()
-    const data = Array.isArray(rawData) ? rawData[0] : rawData
+    const rawBody = await res.text()
+    if (!rawBody?.trim()) return null
+
+    let rawData = JSON.parse(rawBody)
+    let data = Array.isArray(rawData) ? rawData[0] : rawData
+
+    // 🛡️ Robust Parsing: If n8n sends the raw OpenAI node output, find the JSON inside the text
+    const aiText = data.output?.[0]?.text || data.text || '';
+    if (aiText && typeof aiText === 'string') {
+      try {
+        const cleaned = aiText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        data = { ...data, ...parsed };
+      } catch (e) {
+        console.warn('Could not parse AI text as JSON, using raw data');
+      }
+    }
     
     // Mapping your n8n output schema to the frontend state
     return {
       score: data.github_score || 0,
       status: data.verdict || 'PENDING', // STRONG, AVERAGE, WEAK
       details: data.reason || 'Verification complete.',
-      summary: data.detailed_summary || data.reason || '' // Fallback to reason if summary is missing
+      summary: data.detailed_summary || data.reason || '' 
     }
 
   } catch (error) {
@@ -97,6 +112,7 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
     return null
   }
 }
+
 
 
 const analyzeCandidateWithAI = async (payload) => {
