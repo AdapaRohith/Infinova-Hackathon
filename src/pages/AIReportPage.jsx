@@ -237,7 +237,9 @@ export function AIReportPage({ candidates, onGenerateProof }) {
                 statusMessage={statusMessage}
                 onCopyHash={handleCopyHash}
                 copied={copied}
+                agentSignature={candidate.analysis.agentSignature}
               />
+
 
               {candidate.verification?.history?.length > 1 ? (
                 <div className="mt-4 rounded-2xl border border-gray-800 bg-gray-950 p-4">

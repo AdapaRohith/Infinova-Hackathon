@@ -1,4 +1,4 @@
-import { CheckCircle2, Copy, ExternalLink, LoaderCircle, XCircle } from 'lucide-react'
+import { CheckCircle2, Copy, ExternalLink, LoaderCircle, ShieldCheck, XCircle } from 'lucide-react'
 import { Card } from './ui/Card'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
@@ -18,6 +18,7 @@ export function BlockchainProofCard({
   statusMessage,
   onCopyHash,
   copied,
+  agentSignature,
 }) {
   const etherscanUrl = txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : ''
 
@@ -46,7 +47,15 @@ export function BlockchainProofCard({
   return (
     <Card className={`rounded-2xl p-6 shadow-lg ${statusConfig.cardGlow}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-lg font-semibold text-white">🔐 Blockchain Proof</h3>
+        <div className="flex items-center gap-2">
+           <h3 className="text-lg font-semibold text-white">🔐 Blockchain Proof</h3>
+           {agentSignature && (
+             <div className="flex items-center gap-1 text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">
+               <ShieldCheck className="size-3" />
+               AGENT SIGNED
+             </div>
+           )}
+        </div>
         {statusConfig.badge}
       </div>
 
@@ -66,10 +75,11 @@ export function BlockchainProofCard({
           <p className="mt-2 text-sm font-mono text-gray-200" title={hash || 'Not generated yet'}>
             {shortenHash(hash)}
           </p>
-          <p className="mt-2 text-xs text-gray-400">
-            This is a cryptographic fingerprint of the report. Any small change in data will generate a completely different hash.
+          <p className="mt-2 text-[10px] text-gray-500 italic">
+            Includes AI Agent Signature: {shortenHash(agentSignature) || 'N/A'}
           </p>
         </div>
+
 
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
           <p className="text-xs text-gray-400">Status & Timestamp</p>

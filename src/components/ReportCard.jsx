@@ -95,10 +95,42 @@ export function ReportCard({ candidate }) {
           <p className="text-sm text-gray-300 leading-relaxed">{candidate.analysis.summary}</p>
         </div>
 
+        {candidate.analysis.githubVerification && (
+          <div className={`rounded-2xl border p-4 ${
+            candidate.analysis.githubVerification.status === 'Verified' 
+              ? 'border-emerald-500/30 bg-emerald-500/5' 
+              : 'border-amber-500/30 bg-amber-500/5'
+          }`}>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-gray-200">Autonomous Verification Agent</p>
+              <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                candidate.analysis.githubVerification.status === 'Verified'
+                  ? 'bg-emerald-500/20 text-emerald-400'
+                  : 'bg-amber-500/20 text-amber-400'
+              }`}>
+                {candidate.analysis.githubVerification.status}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-gray-300">
+              {candidate.analysis.githubVerification.details}
+            </p>
+          </div>
+        )}
+
+        {candidate.analysis.agentSignature && (
+          <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">
+            <p className="text-xs uppercase tracking-wide text-indigo-300/70">AI Agent Digital Signature (Proof of Evaluation)</p>
+            <p className="mt-1 font-mono text-[10px] text-indigo-200/60 break-all">
+              {candidate.analysis.agentSignature}
+            </p>
+          </div>
+        )}
+
         <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
           <p className="mb-3 text-sm font-semibold text-gray-200">Verification Timeline</p>
           <Timeline candidate={candidate} />
         </div>
+
       </Card>
     </div>
   )

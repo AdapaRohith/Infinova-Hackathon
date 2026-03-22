@@ -67,6 +67,28 @@ const toStructuredAnalysis = (rawText = '') => {
   }
 }
 
+const verifyGitHubWithAI = async (link, skills, resumeText) => {
+  console.log('Sending GitHub link to n8n verify-github webhook', link)
+
+  try {
+    const res = await fetch('https://n8n.avlokai.com/webhook/verify-github', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ link, skills, resumeText }),
+    })
+
+    if (!res.ok) return null
+
+    const data = await res.json()
+    return Array.isArray(data) ? data[0] : data
+  } catch (error) {
+    console.error('GitHub verification failed:', error)
+    return null
+  }
+}
+
 const analyzeCandidateWithAI = async (payload) => {
   console.log('Sending payload to n8n analyze-candidate webhook', payload)
 
@@ -103,6 +125,7 @@ const analyzeCandidateWithAI = async (payload) => {
       summary: String(data.report.summary ?? ''),
       strengths: Array.isArray(data.report.strengths) ? data.report.strengths : [],
       weaknesses: Array.isArray(data.report.weaknesses) ? data.report.weaknesses : [],
+      agentSignature: data.report.agentSignature || null,
     }
   }
 
@@ -114,6 +137,7 @@ const analyzeCandidateWithAI = async (payload) => {
       summary: String(data.summary ?? ''),
       strengths: Array.isArray(data.strengths) ? data.strengths : [],
       weaknesses: Array.isArray(data.weaknesses) ? data.weaknesses : [],
+      agentSignature: data.agentSignature || null,
     }
   }
 
@@ -153,12 +177,17 @@ function App() {
     projectHighlights: payload.link ? [`Project link: ${payload.link}`] : [],
     education: [],
     certifications: [],
+    resumeText: '',
   }
  }
 
  const aiInput = { ...normalized }
 
- const aiReport = await analyzeCandidateWithAI(aiInput)
+ // Start AI Analysis and GitHub Verification in parallel
+ const [aiReport, githubVerification] = await Promise.all([
+   analyzeCandidateWithAI(aiInput),
+   verifyGitHubWithAI(normalized.link, normalized.skills, normalized.resumeText)
+ ])
 
   const candidate = {
     id: crypto.randomUUID(),
@@ -167,7 +196,8 @@ function App() {
     analysis: {
       ...aiReport,
       // Merge AI skills with extracted skills if AI didn't provide any
-      skills: aiReport.skills?.length ? aiReport.skills : normalized.skills
+      skills: aiReport.skills?.length ? aiReport.skills : normalized.skills,
+      githubVerification: githubVerification || { status: 'Manual verification required', details: 'Scraper agent could not reach the provided link.' }
     },
     verification: null,
   }
@@ -175,6 +205,7 @@ function App() {
   dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
   return candidate
 }
+
 
 const handleGenerateProof = async (candidateId, onStatusChange) => {
   const candidate = candidates.find((item) => item.id === candidateId)

@@ -2,7 +2,9 @@ import { useState } from 'react'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { CheckCircle2, ShieldCheck, ShieldAlert } from 'lucide-react'
 import { FlowStepper } from '../components/FlowStepper'
+
 import { Card } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
 import { Button } from '../components/ui/Button'
@@ -116,12 +118,13 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
           {loading ? (
             <Motion.div
               key="loading"
-              className="mt-6 space-y-3"
+              className="mt-6 space-y-4"
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -6 }}
             >
-              <Loader label="Analyzing candidate with AI..." />
+              <Loader label="Analyzing candidate resume..." />
+              <Loader label="Verifying code repositories..." />
               <Skeleton className="h-8 w-40" />
               <Skeleton className="h-4 w-full" />
               <Skeleton className="h-24 w-full" />
@@ -138,7 +141,19 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
               exit={{ opacity: 0 }}
             >
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-emerald-300">AI Evaluation Complete</p>
+                <div className="flex flex-col gap-1">
+                  <p className="text-sm font-medium text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 className="size-4" /> AI Evaluation Complete
+                  </p>
+                  {result.analysis.githubVerification && (
+                    <p className={`text-[11px] font-medium flex items-center gap-1 ${
+                      result.analysis.githubVerification.status === 'Verified' ? 'text-indigo-300' : 'text-amber-300'
+                    }`}>
+                      {result.analysis.githubVerification.status === 'Verified' ? <ShieldCheck className="size-3" /> : <ShieldAlert className="size-3" />}
+                      {result.analysis.githubVerification.status === 'Verified' ? 'Autonomous GitHub Verification: Pass' : 'GitHub Verification: Partial/Manual Required'}
+                    </p>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-1">
                   {(result.analysis.skills || result.skills || []).slice(0, 5).map(skill => (
                     <span key={skill} className="rounded-md bg-gray-800 px-1.5 py-0.5 text-[10px] text-gray-300">
@@ -147,6 +162,7 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate }) {
                   ))}
                 </div>
               </div>
+
               
               <ScoreBar score={result.analysis.score} />
               
