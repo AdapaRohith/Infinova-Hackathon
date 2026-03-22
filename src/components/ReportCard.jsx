@@ -97,25 +97,41 @@ export function ReportCard({ candidate }) {
 
         {candidate.analysis.githubVerification && (
           <div className={`rounded-2xl border p-4 ${
-            candidate.analysis.githubVerification.status === 'Verified' 
+            candidate.analysis.githubVerification.status === 'STRONG' 
               ? 'border-emerald-500/30 bg-emerald-500/5' 
-              : 'border-amber-500/30 bg-amber-500/5'
+              : candidate.analysis.githubVerification.status === 'WEAK'
+                ? 'border-red-500/30 bg-red-500/5'
+                : 'border-amber-500/30 bg-amber-500/5'
           }`}>
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-gray-200">Autonomous Verification Agent</p>
-              <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                candidate.analysis.githubVerification.status === 'Verified'
-                  ? 'bg-emerald-500/20 text-emerald-400'
-                  : 'bg-amber-500/20 text-amber-400'
-              }`}>
-                {candidate.analysis.githubVerification.status}
-              </span>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-semibold text-gray-200">Autonomous Verification Agent</p>
+                <span className={`rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                  candidate.analysis.githubVerification.status === 'STRONG'
+                    ? 'bg-emerald-500/20 text-emerald-400'
+                    : candidate.analysis.githubVerification.status === 'WEAK'
+                      ? 'bg-red-500/20 text-red-400'
+                      : 'bg-amber-500/20 text-amber-400'
+                }`}>
+                  {candidate.analysis.githubVerification.status === 'STRONG' ? 'Claims Verified' : 
+                   candidate.analysis.githubVerification.status === 'WEAK' ? 'False/Weak Claims' : 'Manual Review'}
+                </span>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] uppercase text-gray-500">GitHub Audit Score</p>
+                <p className={`text-lg font-bold ${
+                  candidate.analysis.githubVerification.score > 70 ? 'text-emerald-400' : 'text-amber-400'
+                }`}>
+                  {candidate.analysis.githubVerification.score}/100
+                </p>
+              </div>
             </div>
-            <p className="mt-2 text-sm text-gray-300">
-              {candidate.analysis.githubVerification.details}
+            <p className="mt-2 text-sm text-gray-300 italic">
+              " {candidate.analysis.githubVerification.details} "
             </p>
           </div>
         )}
+
 
         {candidate.analysis.agentSignature && (
           <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-4">

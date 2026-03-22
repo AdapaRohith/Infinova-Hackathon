@@ -81,13 +81,21 @@ const verifyGitHubWithAI = async (link, skills, resumeText) => {
 
     if (!res.ok) return null
 
-    const data = await res.json()
-    return Array.isArray(data) ? data[0] : data
+    const rawData = await res.json()
+    const data = Array.isArray(rawData) ? rawData[0] : rawData
+    
+    // Mapping your n8n output schema to the frontend state
+    return {
+      score: data.github_score || 0,
+      status: data.verdict || 'PENDING', // STRONG, AVERAGE, WEAK
+      details: data.reason || 'Verification complete.'
+    }
   } catch (error) {
     console.error('GitHub verification failed:', error)
     return null
   }
 }
+
 
 const analyzeCandidateWithAI = async (payload) => {
   console.log('Sending payload to n8n analyze-candidate webhook', payload)

@@ -7,7 +7,7 @@ export function ScoreBar({ score }) {
       </div>
       <div className="h-2.5 overflow-hidden rounded-full bg-gray-800">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-700"
+          className="h-full rounded-full bg-linear-to-r from-indigo-500 to-violet-500 transition-all duration-700"
           style={{ width: `${score}%` }}
         />
       </div>
