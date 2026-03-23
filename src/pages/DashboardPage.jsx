@@ -32,7 +32,7 @@ export function DashboardPage({ candidates, onClearCandidates }) {
     () =>
       candidates.filter((candidate) => {
         const score = candidate.analysis?.score ?? 0
-        const verified = candidate.verification?.status === 'Verified on-chain'
+        const verified = candidate.verification?.status?.startsWith('Verified')
         const matchedSkills = candidate.analysis?.skills || candidate.skills || []
         const matchesSkill = !selectedSkill || matchedSkills.includes(selectedSkill)
 
@@ -48,7 +48,7 @@ export function DashboardPage({ candidates, onClearCandidates }) {
 
   const stats = useMemo(() => {
     const verified = candidates.filter(
-      (candidate) => candidate.verification?.status === 'Verified on-chain',
+      (candidate) => candidate.verification?.status?.startsWith('Verified'),
     ).length
     const trusted = candidates.filter(
       (candidate) => candidate.analysis?.assessment?.verdict === 'Trusted',
@@ -80,7 +80,7 @@ export function DashboardPage({ candidates, onClearCandidates }) {
           <p className="mt-2 text-2xl font-semibold text-white">{stats.total}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-xs uppercase tracking-wide text-gray-400">Verified On-chain</p>
+          <p className="text-xs uppercase tracking-wide text-gray-400">Verified On Algorand</p>
           <p className="mt-2 text-2xl font-semibold text-emerald-300">{stats.verified}</p>
         </Card>
         <Card className="p-4">

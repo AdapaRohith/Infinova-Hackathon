@@ -53,11 +53,6 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 }
 
-const fadeIn = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { duration: 0.6 } },
-}
-
 export function LandingPage() {
   return (
     <div className="space-y-16 pb-20 md:space-y-24">

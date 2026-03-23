@@ -39,7 +39,7 @@ export function ReportCard({ candidate }) {
       <Card className="space-y-4 lg:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs uppercase tracking-wide text-gray-400">AI Evaluation</p>
-          <Badge success={candidate.verification?.status === 'Verified on-chain'}>
+          <Badge success={candidate.verification?.status?.startsWith('Verified')}>
             {candidate.verification?.status || 'Not Verified'}
           </Badge>
         </div>

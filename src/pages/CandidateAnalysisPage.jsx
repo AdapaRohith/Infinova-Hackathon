@@ -70,7 +70,7 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate, onGenerateProof }) {
                   hash: proof.hash,
                   txHash: proof.txHash,
                   timestamp: proof.timestamp,
-                  status: 'Verified on-chain',
+                  status: proof.confirmed ? 'Verified on Algorand' : 'Pending on Algorand',
                   history: [
                     ...((prev.verification?.history || []).filter(
                       (item) => item.hash !== proof.hash || item.txHash !== proof.txHash,
@@ -79,13 +79,14 @@ export function CandidateAnalysisPage({ onAnalyzeCandidate, onGenerateProof }) {
                       hash: proof.hash,
                       txHash: proof.txHash,
                       timestamp: proof.timestamp,
+                      confirmed: proof.confirmed,
                     },
                   ],
                 },
               }
             : prev,
         )
-        toast.success('Blockchain proof generated')
+        toast.success(proof.confirmed ? 'Blockchain proof confirmed' : 'Blockchain proof submitted')
       }
     } catch (error) {
       toast.error(error?.message || 'Blockchain proof generation failed.')

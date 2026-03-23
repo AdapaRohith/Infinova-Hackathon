@@ -1,134 +1,21 @@
-import { ethers } from 'ethers'
+import algosdk from 'algosdk'
 
-export const contractAddress = '0x90Dd104d7eCce18929d0A8a069B9b2a0BB562666'
-export const sepoliaChainId = 11155111n
-export const blockchainNetworkName = 'Sepolia'
-export const contractExplorerUrl = `https://sepolia.etherscan.io/address/${contractAddress}`
+export const blockchainNetworkName = 'Algorand'
+export const blockchainNetworkLabel = 'Algorand TestNet'
+export const explorerBaseUrl = 'https://testnet.explorer.perawallet.app'
+export const attestationReferenceLabel = 'Attestation Method'
+export const attestationReferenceValue = 'Self-payment note attestation'
+export const contractExplorerUrl = explorerBaseUrl
+export const contractAddress = attestationReferenceValue
+
+let peraWalletInstance = null
+const notePrefix = 'INFINOVA_PROOF_V1|'
+const notePrefixBytes = new TextEncoder().encode(notePrefix)
+const algodClient = new algosdk.Algodv2('', 'https://testnet-api.algonode.cloud', '')
+const indexerClient = new algosdk.Indexer('', 'https://testnet-idx.algonode.cloud', '')
 
 export const getTxExplorerUrl = (txHash) =>
-  txHash ? `https://sepolia.etherscan.io/tx/${txHash}` : ''
-
-const abi = [
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: 'candidateId',
-        type: 'string',
-      },
-      {
-        internalType: 'uint256',
-        name: 'index',
-        type: 'uint256',
-      },
-    ],
-    name: 'getRecord',
-    outputs: [
-      {
-        internalType: 'string',
-        name: '',
-        type: 'string',
-      },
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: 'candidateId',
-        type: 'string',
-      },
-    ],
-    name: 'getRecordCount',
-    outputs: [
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: '',
-        type: 'string',
-      },
-      {
-        internalType: 'uint256',
-        name: '',
-        type: 'uint256',
-      },
-    ],
-    name: 'records',
-    outputs: [
-      {
-        internalType: 'string',
-        name: 'hash',
-        type: 'string',
-      },
-      {
-        internalType: 'uint256',
-        name: 'timestamp',
-        type: 'uint256',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: 'candidateId',
-        type: 'string',
-      },
-      {
-        internalType: 'string',
-        name: 'hash',
-        type: 'string',
-      },
-    ],
-    name: 'storeRecord',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'string',
-        name: 'candidateId',
-        type: 'string',
-      },
-      {
-        internalType: 'string',
-        name: 'hash',
-        type: 'string',
-      },
-    ],
-    name: 'verifyRecord',
-    outputs: [
-      {
-        internalType: 'bool',
-        name: '',
-        type: 'bool',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-]
+  txHash ? `${explorerBaseUrl}/tx/${txHash}/` : ''
 
 const createBlockchainError = (message, code) => {
   const error = new Error(message)
@@ -136,98 +23,204 @@ const createBlockchainError = (message, code) => {
   return error
 }
 
-const ensureEthereum = () => {
-  if (!window.ethereum) {
-    throw createBlockchainError('MetaMask is not installed. Please install MetaMask to continue.', 'NO_METAMASK')
+const getPeraWallet = async () => {
+  if (peraWalletInstance) return peraWalletInstance
+
+  try {
+    if (typeof globalThis.global === 'undefined') {
+      globalThis.global = globalThis
+    }
+
+    const { PeraWalletConnect } = await import('@perawallet/connect')
+    peraWalletInstance = new PeraWalletConnect({
+      chainId: 416002,
+      shouldShowSignTxnToast: false,
+    })
+    return peraWalletInstance
+  } catch (error) {
+    throw createBlockchainError(
+      `Unable to load Pera Wallet. ${error?.message || 'Please refresh and try again.'}`,
+      'NO_PERA',
+    )
+  }
+}
+
+export const disconnectWalletSession = async () => {
+  if (!peraWalletInstance) return
+
+  try {
+    await peraWalletInstance.disconnect()
+  } finally {
+    peraWalletInstance = null
+  }
+}
+
+const fromBase64 = (value) => Uint8Array.from(atob(value), (char) => char.charCodeAt(0))
+
+const encodeAttestationNote = (candidateId, hash) =>
+  new TextEncoder().encode(
+    `${notePrefix}${JSON.stringify({
+      candidateId,
+      hash,
+      createdAt: new Date().toISOString(),
+    })}`,
+  )
+
+const decodeAttestationNote = (note) => {
+  if (!note) return null
+
+  try {
+    const decoded = new TextDecoder().decode(fromBase64(note))
+    if (!decoded.startsWith(notePrefix)) return null
+    return JSON.parse(decoded.slice(notePrefix.length))
+  } catch {
+    return null
+  }
+}
+
+const connectWallet = async () => {
+  const peraWallet = await getPeraWallet()
+  let accounts = await peraWallet.reconnectSession()
+
+  if (!accounts?.length) {
+    try {
+      accounts = await peraWallet.connect()
+    } catch (error) {
+      if (String(error?.message || '').toLowerCase().includes('closed')) {
+        throw createBlockchainError('Pera Wallet connection was closed before approval.', 'WALLET_REJECTED')
+      }
+      throw error
+    }
   }
 
-  return window.ethereum
-}
+  if (!accounts?.length) {
+    throw createBlockchainError('No Algorand account is available in Pera Wallet.', 'NO_ACCOUNT')
+  }
 
-const ensureSepolia = async (provider) => {
-  const network = await provider.getNetwork()
-  if (network.chainId !== sepoliaChainId) {
-    throw createBlockchainError('Wrong network. Please switch MetaMask to Sepolia testnet.', 'WRONG_NETWORK')
+  return {
+    account: accounts[0],
   }
 }
 
-const getProvider = async () => {
-  const ethereum = ensureEthereum()
-  const provider = new ethers.BrowserProvider(ethereum)
-  await ensureSepolia(provider)
-  return { ethereum, provider }
-}
+const listAttestations = async (candidateId) => {
+  const response = await indexerClient
+    .searchForTransactions()
+    .txType('pay')
+    .notePrefix(notePrefixBytes)
+    .limit(200)
+    .do()
 
-const getWriteContract = async () => {
-  const { ethereum, provider } = await getProvider()
-  await ethereum.request({ method: 'eth_requestAccounts' })
-  const signer = await provider.getSigner()
-  return new ethers.Contract(contractAddress, abi, signer)
-}
+  const transactions = response.transactions ?? []
 
-const getReadContract = async () => {
-  const { provider } = await getProvider()
-  return new ethers.Contract(contractAddress, abi, provider)
+  return transactions
+    .map((transaction) => {
+      const note = decodeAttestationNote(transaction.note)
+      if (!note || note.candidateId !== candidateId) return null
+
+      return {
+        hash: note.hash,
+        timestamp: transaction['round-time'] ?? 0,
+        txHash: transaction.id,
+        senderAddress: transaction.sender,
+      }
+    })
+    .filter(Boolean)
+    .sort((left, right) => right.timestamp - left.timestamp)
 }
 
 export const storeHash = async (candidateId, hash, onStatusChange) => {
   onStatusChange?.({
     status: 'waiting_approval',
-    message: 'Waiting for MetaMask approval...',
+    message: 'Waiting for Pera Wallet approval...',
   })
 
-  const contract = await getWriteContract()
-  const tx = await contract.storeRecord(candidateId, hash)
+  const { account } = await connectWallet()
+  const peraWallet = await getPeraWallet()
+  const suggestedParams = await algodClient.getTransactionParams().do()
+  const transaction = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+    sender: account,
+    receiver: account,
+    amount: 0,
+    note: encodeAttestationNote(candidateId, hash),
+    suggestedParams,
+  })
+  const txId = transaction.txID()
+  const txnGroup = [[{ txn: transaction, signers: [account] }]]
+  let signedTransactions
+  try {
+    signedTransactions = await peraWallet.signTransaction(txnGroup)
+  } catch (error) {
+    if (String(error?.message || '').toLowerCase().includes('closed')) {
+      throw createBlockchainError('Pera Wallet signing was closed before approval.', 'WALLET_REJECTED')
+    }
+    throw error
+  }
+  await algodClient.sendRawTransaction(signedTransactions).do()
 
   onStatusChange?.({
     status: 'pending',
-    message: 'Transaction pending...',
-    txHash: tx.hash,
-  })
-
-  await tx.wait()
-
-  onStatusChange?.({
-    status: 'confirmed',
-    message: 'Transaction confirmed ✅',
-    txHash: tx.hash,
+    message: 'Algorand transaction pending...',
+    txHash: txId,
   })
 
   return {
-    txHash: tx.hash,
+    txHash: txId,
     timestamp: new Date().toISOString(),
+    senderAddress: account,
+    confirmed: false,
+  }
+}
+
+export const isTransactionConfirmed = async (txHash) => {
+  if (!txHash) return false
+
+  try {
+    const pendingTransaction = await algodClient.pendingTransactionInformation(txHash).do()
+    if (pendingTransaction['confirmed-round']) {
+      return true
+    }
+  } catch {
+    // fall through to indexer lookup
+  }
+
+  try {
+    const response = await indexerClient.lookupTransactionByID(txHash).do()
+    return Boolean(response.transaction?.['confirmed-round'] || response.transaction?.['round-time'])
+  } catch {
+    return false
   }
 }
 
 export const verifyHash = async (candidateId, hash) => {
-  const contract = await getReadContract()
-  return contract.verifyRecord(candidateId, hash)
+  const attestations = await listAttestations(candidateId)
+  return attestations.some((item) => item.hash === hash)
 }
 
 export const getAttestationRecordCount = async (candidateId) => {
-  const contract = await getReadContract()
-  const count = await contract.getRecordCount(candidateId)
-  return Number(count)
+  const attestations = await listAttestations(candidateId)
+  return attestations.length
 }
 
 export const getAttestationRecord = async (candidateId, index) => {
-  const contract = await getReadContract()
-  const [hash, timestamp] = await contract.getRecord(candidateId, index)
+  const attestations = await listAttestations(candidateId)
+  const record = attestations[index]
+  if (!record) return null
 
   return {
-    hash,
-    timestamp: Number(timestamp),
+    hash: record.hash,
+    timestamp: record.timestamp,
+    txHash: record.txHash,
+    senderAddress: record.senderAddress,
   }
 }
 
 export const getLatestAttestation = async (candidateId) => {
-  const count = await getAttestationRecordCount(candidateId)
-  if (!count) return null
-
-  const latestRecord = await getAttestationRecord(candidateId, count - 1)
+  const attestations = await listAttestations(candidateId)
+  if (!attestations.length) return null
+  const [latestRecord] = attestations
 
   return {
     ...latestRecord,
-    count,
+    count: attestations.length,
   }
 }

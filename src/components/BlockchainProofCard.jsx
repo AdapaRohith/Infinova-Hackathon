@@ -3,7 +3,13 @@ import { Card } from './ui/Card'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
 import { formatDateTime } from '../utils/helpers'
-import { blockchainNetworkName, contractAddress, contractExplorerUrl, getTxExplorerUrl } from '../utils/blockchain'
+import {
+  blockchainNetworkLabel,
+  attestationReferenceLabel,
+  attestationReferenceValue,
+  contractExplorerUrl,
+  getTxExplorerUrl,
+} from '../utils/blockchain'
 
 const shortenHash = (value) => {
   if (!value) return ''
@@ -22,7 +28,7 @@ export function BlockchainProofCard({
   copied,
   agentSignature,
 }) {
-  const etherscanUrl = getTxExplorerUrl(txHash)
+  const explorerUrl = getTxExplorerUrl(txHash)
   const proofPending = !hash && !txHash
   const displayedHash = shortenHash(hash)
   const displayedTxHash = shortenHash(txHash)
@@ -31,8 +37,8 @@ export function BlockchainProofCard({
   const statusConfig =
     status === 'verified'
       ? {
-          label: 'Verified On-Chain',
-          badge: <Badge success>Verified On-Chain</Badge>,
+          label: 'Verified On Algorand',
+          badge: <Badge success>Verified On Algorand</Badge>,
           icon: <CheckCircle2 className="size-4 text-emerald-300" />,
           cardGlow: 'border-emerald-500/30 shadow-emerald-500/10',
         }
@@ -54,7 +60,7 @@ export function BlockchainProofCard({
     <Card className={`rounded-2xl p-6 shadow-lg ${statusConfig.cardGlow}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-semibold text-white">On-Chain Hiring Attestation</h3>
+          <h3 className="text-lg font-semibold text-white">Algorand Hiring Attestation</h3>
           {agentSignature && (
             <div className="flex items-center gap-1 rounded-full border border-indigo-500/20 bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-400">
               <ShieldCheck className="size-3" />
@@ -83,7 +89,7 @@ export function BlockchainProofCard({
             <>
               <p className="mt-2 text-sm font-medium text-gray-200">Proof not generated yet</p>
               <p className="mt-2 text-[10px] italic text-gray-500">
-                Hash, transaction link, and agent seal will appear after you generate proof.
+                Hash, transaction link, and agent seal will appear after you generate the Algorand proof.
               </p>
             </>
           ) : (
@@ -105,29 +111,29 @@ export function BlockchainProofCard({
             <span>{statusConfig.label}</span>
           </div>
           <p className="mt-2 text-sm text-gray-300">{formatDateTime(timestamp)}</p>
-          <p className="mt-3 text-xs text-gray-400">{statusMessage || 'Ready to create blockchain proof.'}</p>
+          <p className="mt-3 text-xs text-gray-400">{statusMessage || 'Ready to create Algorand proof.'}</p>
         </div>
 
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
           <p className="text-xs text-gray-400">Transaction</p>
           <p className="mt-2 text-sm font-mono text-gray-300" title={txHash || 'Pending proof generation'}>
-            {displayedTxHash || 'Created after on-chain submission'}
+            {displayedTxHash || 'Created after Algorand submission'}
           </p>
           <a
-            href={etherscanUrl || '#'}
+            href={explorerUrl || '#'}
             target="_blank"
             rel="noreferrer"
             className={`mt-3 inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium transition ${
-              etherscanUrl
+              explorerUrl
                 ? 'border-gray-700 bg-gray-900 text-gray-200 hover:border-indigo-400/60 hover:text-white'
                 : 'cursor-not-allowed border-gray-800 bg-gray-900/50 text-gray-500'
             }`}
             onClick={(event) => {
-              if (!etherscanUrl) event.preventDefault()
+              if (!explorerUrl) event.preventDefault()
             }}
           >
             <ExternalLink className="size-3.5" />
-            {etherscanUrl ? 'View on Etherscan' : 'Etherscan available after proof'}
+            {explorerUrl ? 'View on AlgoExplorer' : 'Explorer link available after proof'}
           </a>
         </div>
       </div>
@@ -139,17 +145,17 @@ export function BlockchainProofCard({
         </div>
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
           <p className="text-xs text-gray-400">Network</p>
-          <p className="mt-2 text-sm text-gray-200">{blockchainNetworkName} Testnet</p>
+          <p className="mt-2 text-sm text-gray-200">{blockchainNetworkLabel}</p>
         </div>
         <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
-          <p className="text-xs text-gray-400">Smart Contract</p>
+          <p className="text-xs text-gray-400">{attestationReferenceLabel}</p>
           <a
             href={contractExplorerUrl}
             target="_blank"
             rel="noreferrer"
             className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200"
           >
-            <span className="font-mono">{shortenHash(contractAddress)}</span>
+            <span className="font-mono">{attestationReferenceValue}</span>
             <ExternalLink className="size-3.5" />
           </a>
         </div>

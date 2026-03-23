@@ -13,8 +13,8 @@ export function Timeline({ candidate }) {
       timestamp: candidate?.verification?.timestamp,
     },
     {
-      label: 'Verified on Blockchain',
-      done: candidate?.verification?.status === 'Verified on-chain',
+      label: 'Verified on Algorand',
+      done: candidate?.verification?.status?.startsWith('Verified'),
       timestamp: candidate?.verification?.timestamp,
     },
   ]

@@ -35,7 +35,7 @@ const SKILL_PATTERNS = [
   { name: 'Figma', regex: /\bfigma\b/i },
 ]
 
-const SECTION_BREAK = /\b(?:experience|work experience|employment|projects|education|skills|technical skills|certifications|achievements|summary|profile)\b\s*[:\-]?/gi
+const SECTION_BREAK = /\b(?:experience|work experience|employment|projects|education|skills|technical skills|certifications|achievements|summary|profile)\b\s*[:-]?/gi
 
 const cleanText = (value = '') => String(value).replace(/\s+/g, ' ').trim()
 
@@ -44,7 +44,7 @@ const unique = (list) => [...new Set(list.filter(Boolean))]
 const getSection = (text, sectionNames) => {
   const source = String(text || '')
   const headings = sectionNames.join('|')
-  const regex = new RegExp(`(?:^|\\n)\\s*(?:${headings})\\s*[:\\-]?\\s*([\\s\\S]*?)(?=\\n\\s*(?:${SECTION_BREAK.source})|$)`, 'i')
+  const regex = new RegExp(`(?:^|\\n)\\s*(?:${headings})\\s*[:-]?\\s*([\\s\\S]*?)(?=\\n\\s*(?:${SECTION_BREAK.source})|$)`, 'i')
   const match = source.match(regex)
   return match ? match[1].trim() : ''
 }
@@ -64,7 +64,7 @@ const extractSkills = (text) => {
   const sectionSkills = sectionMatch && sectionMatch[1]
     ? sectionMatch[1]
         .split(/[|,\n•]/)
-        .map((item) => item.replace(/[^a-z0-9.+#\- ]/gi, '').trim())
+        .map((item) => item.replace(/[^-a-z0-9.+# ]/gi, '').trim())
         .filter((item) => item.length >= 2 && item.length <= 30)
         .map((item) => item.replace(/\b(technical|skills|tools|stack)\b/gi, '').trim())
         .filter(Boolean)

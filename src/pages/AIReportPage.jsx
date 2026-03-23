@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { AnimatePresence, motion as Motion } from 'framer-motion'
@@ -10,8 +10,9 @@ import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Loader } from '../components/ui/Loader'
 import { formatDateTime } from '../utils/helpers'
+import { disconnectWalletSession } from '../utils/blockchain'
 
-export function AIReportPage({ candidates, onGenerateProof }) {
+export function AIReportPage({ candidates, onGenerateProof, onRefreshProofStatus }) {
   const { candidateId } = useParams()
   const [isLoading, setIsLoading] = useState(false)
   const [statusMessage, setStatusMessage] = useState('')
@@ -23,35 +24,73 @@ export function AIReportPage({ candidates, onGenerateProof }) {
     () => candidates.find((item) => item.id === candidateId),
     [candidateId, candidates],
   )
-
-  if (!candidate) {
-    return (
-      <Card>
-        <p className="text-gray-300">Candidate report not found.</p>
-      </Card>
-    )
-  }
+  const verification = candidate?.verification
 
   const shortenHash = (value) => {
-    if (!value) return '—'
+    if (!value) return '-'
     if (value.length <= 20) return value
     return `${value.slice(0, 10)}...${value.slice(-8)}`
   }
 
-  const activeTxHash = txHash || candidate.verification?.txHash
+  const activeTxHash =
+    txHash ||
+    verification?.txHash ||
+    verification?.history?.slice(-1)[0]?.txHash ||
+    ''
+
+  useEffect(() => {
+    if (!verification) return
+
+    if (verification.status === 'Verified on Algorand') {
+      setTxStatus('confirmed')
+      setStatusMessage('Algorand attestation confirmed.')
+      return
+    }
+
+    if (verification.status === 'Pending on Algorand') {
+      setTxStatus('pending')
+      setStatusMessage('Transaction submitted to Algorand. Waiting for network confirmation...')
+    }
+  }, [verification])
+
+  useEffect(() => {
+    if (activeTxHash && !txHash) {
+      setTxHash(activeTxHash)
+    }
+  }, [activeTxHash, txHash])
+
+  useEffect(() => {
+    if (!candidate || verification?.status !== 'Pending on Algorand' || !activeTxHash) return undefined
+
+    let cancelled = false
+    const intervalId = window.setInterval(async () => {
+      const confirmed = await onRefreshProofStatus?.(candidate.id)
+      if (!cancelled && confirmed) {
+        setStatusMessage('Algorand attestation confirmed.')
+        setTxStatus('confirmed')
+      }
+    }, 10000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(intervalId)
+    }
+  }, [activeTxHash, candidate, onRefreshProofStatus, verification?.status])
 
   const proofStatus =
     txStatus === 'failed'
       ? 'tampered'
-      : candidate.verification?.status === 'Verified on-chain'
+      : verification?.status === 'Verified on Algorand' || txStatus === 'confirmed'
         ? 'verified'
-        : isLoading || txStatus === 'pending' || txStatus === 'waiting_approval'
+        : verification?.status === 'Pending on Algorand' || isLoading || txStatus === 'waiting_approval' || txStatus === 'pending'
           ? 'pending'
           : 'pending'
 
   const handleProof = async () => {
+    if (!candidate) return
+
     setIsLoading(true)
-    setStatusMessage('Waiting for MetaMask approval...')
+    setStatusMessage('Waiting for Pera Wallet approval...')
     setTxStatus('waiting_approval')
     setTxHash('')
 
@@ -69,20 +108,28 @@ export function AIReportPage({ candidates, onGenerateProof }) {
         setTxHash(proof.txHash)
       }
 
-      setStatusMessage('Transaction confirmed ✅')
-      setTxStatus('confirmed')
+      if (proof?.confirmed) {
+        setStatusMessage('Algorand attestation confirmed.')
+        setTxStatus('confirmed')
+        toast.success('Blockchain proof confirmed')
+      } else {
+        setStatusMessage('Transaction submitted to Algorand. Waiting for network confirmation...')
+        setTxStatus('pending')
+        toast.success('Blockchain proof submitted')
+      }
       setRevealTick((value) => value + 1)
-      toast.success('Blockchain proof generated')
     } catch (error) {
       const errorCode = error?.code
-      let failureMessage = 'Transaction failed ❌'
+      let failureMessage = 'Transaction failed.'
 
-      if (errorCode === 'NO_METAMASK') {
-        failureMessage = 'MetaMask not installed. Install MetaMask to continue.'
-      } else if (errorCode === 'WRONG_NETWORK') {
-        failureMessage = 'Wrong network. Please switch MetaMask to Sepolia testnet.'
-      } else if (errorCode === 4001) {
-        failureMessage = 'Transaction failed ❌ User rejected in MetaMask.'
+      if (errorCode === 'NO_PERA') {
+        failureMessage = error?.message || 'Pera Wallet is required to continue.'
+      } else if (errorCode === 'NO_ACCOUNT') {
+        failureMessage = 'No Algorand account is available in Pera Wallet.'
+      } else if (errorCode === 'WALLET_REJECTED' || errorCode === 4001) {
+        failureMessage = 'Transaction failed. User rejected the Pera Wallet request.'
+      } else if (error?.message) {
+        failureMessage = error.message
       }
 
       setStatusMessage(failureMessage)
@@ -94,18 +141,30 @@ export function AIReportPage({ candidates, onGenerateProof }) {
   }
 
   const handleCopyHash = async () => {
-    if (!candidate.verification?.hash) {
+    if (!verification?.hash) {
       toast.error('Generate proof before copying hash')
       return
     }
 
     try {
-      await navigator.clipboard.writeText(candidate.verification.hash)
+      await navigator.clipboard.writeText(verification.hash)
       setCopied(true)
       setTimeout(() => setCopied(false), 1200)
       toast.success('Hash copied to clipboard')
     } catch {
       toast.error('Clipboard access is blocked on this browser')
+    }
+  }
+
+  const handleDisconnectWallet = async () => {
+    try {
+      await disconnectWalletSession()
+      setStatusMessage('Pera Wallet session disconnected. You can connect again when ready.')
+      setTxStatus('idle')
+      setTxHash('')
+      toast.success('Pera Wallet disconnected')
+    } catch {
+      toast.error('Could not disconnect Pera Wallet session')
     }
   }
 
@@ -128,13 +187,21 @@ export function AIReportPage({ candidates, onGenerateProof }) {
               color: 'text-emerald-300',
               border: 'border-emerald-500/40 bg-emerald-500/10 shadow-emerald-500/10',
             }
-          : txStatus === 'failed'
+      : txStatus === 'failed'
             ? {
                 icon: <XCircle className="size-4 text-red-300" />,
                 color: 'text-red-300',
                 border: 'border-red-500/40 bg-red-500/10',
               }
             : null
+
+  if (!candidate) {
+    return (
+      <Card>
+        <p className="text-gray-300">Candidate report not found.</p>
+      </Card>
+    )
+  }
 
   return (
     <div className="space-y-6 pb-14">
@@ -146,7 +213,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-white">Blockchain Verification Module</h2>
-            <p className="text-sm text-gray-400">Create immutable hiring proof for this AI report.</p>
+            <p className="text-sm text-gray-400">Create immutable Algorand proof for this AI report.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <Button
@@ -155,10 +222,13 @@ export function AIReportPage({ candidates, onGenerateProof }) {
               onClick={handleProof}
             >
               {isLoading
-                ? 'Processing transaction...'
+                ? 'Processing Algorand transaction...'
                 : candidate.verification?.status
                   ? 'Regenerate Proof'
                   : 'Generate Proof'}
+            </Button>
+            <Button variant="secondary" disabled={isLoading} onClick={handleDisconnectWallet}>
+              Disconnect Pera
             </Button>
 
             <div className="relative">
@@ -187,7 +257,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
             <p className="font-semibold text-indigo-300">Step 1: Generate AI Report</p>
           </div>
           <div className="rounded-xl border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-gray-300">
-            <p className="font-semibold text-indigo-300">Step 2: Store Proof on Blockchain</p>
+            <p className="font-semibold text-indigo-300">Step 2: Store Proof on Algorand</p>
           </div>
           <div className="rounded-xl border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-gray-300">
             <p className="font-semibold text-indigo-300">Step 3: Verify Integrity</p>
@@ -195,7 +265,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
         </div>
 
         <div className="mt-3 rounded-2xl border border-dashed border-indigo-500/40 bg-indigo-500/5 p-3 text-sm text-indigo-100/90">
-          <p>Try modifying the data below to simulate tampering 👇</p>
+          <p>Try modifying the data below to simulate tampering.</p>
           <p className="mt-1">Now click verify to check integrity.</p>
         </div>
 
@@ -219,7 +289,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
               exit={{ opacity: 0 }}
               className="mt-5 rounded-2xl border border-gray-800 bg-gray-950/70 p-5"
             >
-              <Loader label={statusMessage || 'Processing blockchain transaction...'} />
+              <Loader label={statusMessage || 'Processing Algorand transaction...'} />
             </Motion.div>
           ) : (
             <Motion.div
@@ -241,7 +311,6 @@ export function AIReportPage({ candidates, onGenerateProof }) {
                 agentSignature={candidate.analysis.agentSignature}
               />
 
-
               {candidate.verification?.history?.length > 1 ? (
                 <div className="mt-4 rounded-2xl border border-gray-800 bg-gray-950 p-4">
                   <p className="text-xs uppercase tracking-wide text-gray-400">Version History</p>
@@ -251,7 +320,7 @@ export function AIReportPage({ candidates, onGenerateProof }) {
                       .reverse()
                       .slice(0, 5)
                       .map((item) => (
-                        <p key={`${item.timestamp}-${item.hash}`}>• {shortenHash(item.hash)} · {formatDateTime(item.timestamp)}</p>
+                        <p key={`${item.timestamp}-${item.hash}`}>- {shortenHash(item.hash)} | {formatDateTime(item.timestamp)}</p>
                       ))}
                   </div>
                 </div>
@@ -266,8 +335,14 @@ export function AIReportPage({ candidates, onGenerateProof }) {
             <p className="mt-1 text-xs text-gray-400">Candidate signals and skill score generated.</p>
           </div>
           <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-3 text-sm text-gray-300">
-            <p className="font-medium text-emerald-300">Proof Stored on Blockchain</p>
-            <p className="mt-1 text-xs text-gray-400">Tamper-proof hash is available for recruiter verification. Timestamp: {formatDateTime(candidate.verification?.timestamp)}</p>
+            <p className="font-medium text-emerald-300">Proof Stored on Algorand</p>
+            <p className="mt-1 text-xs text-gray-400">
+              {candidate.verification?.status === 'Verified on Algorand'
+                ? `Tamper-proof hash confirmed on Algorand. Timestamp: ${formatDateTime(candidate.verification?.timestamp)}`
+                : candidate.verification?.status === 'Pending on Algorand'
+                  ? 'Transaction submitted to Algorand and awaiting confirmation.'
+                  : `Tamper-proof hash is available for recruiter verification on Algorand. Timestamp: ${formatDateTime(candidate.verification?.timestamp)}`}
+            </p>
           </div>
         </div>
       </Card>

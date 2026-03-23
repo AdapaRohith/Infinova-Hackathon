@@ -9,7 +9,9 @@ import { Badge } from '../components/ui/Badge'
 import { formatDateTime } from '../utils/helpers'
 import {
   blockchainNetworkName,
-  contractAddress,
+  blockchainNetworkLabel,
+  attestationReferenceLabel,
+  attestationReferenceValue,
   contractExplorerUrl,
   getLatestAttestation,
   getTxExplorerUrl,
@@ -68,7 +70,7 @@ export function VerificationPage({ candidates }) {
       if (!isValid) {
         setResult(null)
         setAttestationMeta(null)
-        setError('Hash exists locally but failed on-chain verification.')
+        setError('Hash exists locally but failed Algorand verification.')
         setVerificationState('tampered')
         toast.error('Verification mismatch')
         return
@@ -78,17 +80,10 @@ export function VerificationPage({ candidates }) {
       setAttestationMeta(latestAttestation)
       setError('')
       setVerificationState('verified')
-      toast.success('Attestation verified on-chain')
-    } catch (blockchainError) {
-      if (blockchainError?.code === 'NO_METAMASK') {
-        setError('MetaMask is not installed. Please install it to verify on-chain.')
-      } else if (blockchainError?.code === 'WRONG_NETWORK') {
-        setError('Wrong network. Switch MetaMask to Sepolia testnet to verify this attestation.')
-      } else {
-        setError('Unable to verify on-chain right now. Please try again.')
-      }
-
-      setVerificationState('tampered')
+      toast.success('Attestation verified on Algorand')
+    } catch {
+      setError('Unable to reach Algorand verification services right now. Please try again.')
+      setVerificationState('idle')
       setResult(null)
       setAttestationMeta(null)
       toast.error('Verification failed')
@@ -106,12 +101,12 @@ export function VerificationPage({ candidates }) {
           <div>
             <h1 className="text-2xl font-semibold text-white">On-Chain Attestation Verifier</h1>
             <p className="mt-2 text-sm text-gray-400">
-              Validate that a hiring report hash still matches the blockchain attestation.
+              Validate that a hiring report hash still matches the Algorand attestation.
             </p>
           </div>
           <div className="rounded-2xl border border-gray-800 bg-gray-950/70 px-4 py-3 text-sm text-gray-300">
             <p className="text-[11px] uppercase tracking-wide text-gray-500">Network</p>
-            <p className="mt-1 font-medium text-white">{blockchainNetworkName} Testnet</p>
+            <p className="mt-1 font-medium text-white">{blockchainNetworkLabel}</p>
           </div>
         </div>
 
@@ -120,7 +115,7 @@ export function VerificationPage({ candidates }) {
             <p className="font-semibold text-indigo-300">Step 1: Candidate Evaluated</p>
           </div>
           <div className="rounded-xl border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-gray-300">
-            <p className="font-semibold text-indigo-300">Step 2: Attestation Written On-Chain</p>
+            <p className="font-semibold text-indigo-300">Step 2: Attestation Written on Algorand</p>
           </div>
           <div className="rounded-xl border border-gray-800 bg-gray-950/70 px-3 py-2 text-xs text-gray-300">
             <p className="font-semibold text-indigo-300">Step 3: Integrity Rechecked Independently</p>
@@ -129,14 +124,14 @@ export function VerificationPage({ candidates }) {
 
         <div className="mt-4 grid gap-3 md:grid-cols-2">
           <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
-            <p className="text-[11px] uppercase tracking-wide text-gray-500">Contract</p>
+            <p className="text-[11px] uppercase tracking-wide text-gray-500">{attestationReferenceLabel}</p>
             <a
               href={contractExplorerUrl}
               target="_blank"
               rel="noreferrer"
               className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200"
             >
-              <span className="font-mono">{contractAddress}</span>
+              <span className="font-mono">{attestationReferenceValue}</span>
               <ExternalLink className="size-3.5" />
             </a>
           </div>
@@ -155,7 +150,7 @@ export function VerificationPage({ candidates }) {
             onChange={(event) => setHash(event.target.value)}
             placeholder="Paste attestation hash"
           />
-          <Button type="submit" disabled={isLoading}>{isLoading ? 'Verifying...' : 'Verify On-Chain'}</Button>
+          <Button type="submit" disabled={isLoading}>{isLoading ? 'Verifying...' : 'Verify on Algorand'}</Button>
         </form>
 
         {verifiedCandidates.length > 0 && (
@@ -194,7 +189,7 @@ export function VerificationPage({ candidates }) {
             <h2 className="mt-2 text-xl font-semibold text-white">{result.name}</h2>
             <p className="text-sm text-gray-400">{result.email}</p>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <Badge success>{result.verification?.status || 'Verified on-chain'}</Badge>
+              <Badge success>{result.verification?.status || 'Verified on Algorand'}</Badge>
               <span className="text-sm text-gray-300">Score: {result.analysis?.score}/100</span>
               <span className="text-sm text-gray-300">Timestamp: {formatDateTime(result.verification?.timestamp)}</span>
             </div>
@@ -219,22 +214,26 @@ export function VerificationPage({ candidates }) {
               <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Latest On-Chain Timestamp</p>
                 <p className="mt-2 text-sm text-gray-200">
-                  {attestationMeta?.timestamp
+                  {typeof attestationMeta?.timestamp === 'number'
                     ? formatDateTime(new Date(attestationMeta.timestamp * 1000).toISOString())
-                    : formatDateTime(result.verification?.timestamp)}
+                    : formatDateTime(attestationMeta?.timestamp || result.verification?.timestamp)}
                 </p>
               </div>
               <div className="rounded-2xl border border-gray-800 bg-gray-950/70 p-4">
                 <p className="text-[11px] uppercase tracking-wide text-gray-500">Transaction</p>
-                <a
-                  href={getTxExplorerUrl(result.verification?.txHash)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200"
-                >
-                  <span className="font-mono">{shortenHash(result.verification?.txHash)}</span>
-                  <ExternalLink className="size-3.5" />
-                </a>
+                {attestationMeta?.txHash || result.verification?.txHash ? (
+                  <a
+                    href={getTxExplorerUrl(attestationMeta?.txHash || result.verification?.txHash)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-2 inline-flex items-center gap-1 text-sm text-indigo-300 hover:text-indigo-200"
+                  >
+                    <span className="font-mono">{shortenHash(attestationMeta?.txHash || result.verification?.txHash)}</span>
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                ) : (
+                  <p className="mt-2 text-sm text-gray-500">Transaction ID unavailable</p>
+                )}
               </div>
             </div>
             <div className="mt-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-emerald-100/90">
