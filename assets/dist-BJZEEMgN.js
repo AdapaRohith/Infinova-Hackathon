@@ -1,1 +1,0 @@
-import"./index-CwRNDfHy.js";import{p as e,u as t}from"./index-13745370-B2bg5zCS.js";e();export{t as PeraWalletConnect};
