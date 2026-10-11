@@ -1,1 +1,0 @@
-import"./index-DI_OnMuM.js";import{p as e,u as t}from"./index-13745370-B0n_Cq4H.js";e();export{t as PeraWalletConnect};
