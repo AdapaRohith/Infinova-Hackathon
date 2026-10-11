@@ -8,16 +8,6 @@ export function Timeline({ candidate }) {
       done: Boolean(candidate?.analysis),
       timestamp: candidate?.createdAt,
     },
-    {
-      label: 'Hash Generated',
-      done: Boolean(candidate?.verification?.hash),
-      timestamp: candidate?.verification?.timestamp,
-    },
-    {
-      label: 'Verified on Algorand',
-      done: Boolean(candidate?.verification?.status?.startsWith('Verified')),
-      timestamp: candidate?.verification?.timestamp,
-    },
   ]
 
   return (

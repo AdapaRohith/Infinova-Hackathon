@@ -1,10 +1,8 @@
 import { motion as Motion } from 'framer-motion'
 import {
   Brain,
-  Blocks,
   LayoutDashboard,
   Sparkles,
-  Shield,
   Zap,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -21,11 +19,6 @@ const features = [
     description: 'Multiple agents extract claims, cross-check identity, audit GitHub evidence, and issue a recruiter verdict.',
   },
   {
-    icon: Blocks,
-    title: 'Blockchain Verification',
-    description: 'Each candidate proof is hashed and recorded for immutable trust.',
-  },
-  {
     icon: LayoutDashboard,
     title: 'Recruiter Dashboard',
     description: 'Track evaluated candidates with instant verification status and filters.',
@@ -34,7 +27,6 @@ const features = [
 
 const stats = [
   { icon: Sparkles, value: 'AI', label: 'Structured Evaluation' },
-  { icon: Shield, value: 'Web3', label: 'On-chain Proof' },
   { icon: Zap, value: 'Audit', label: 'Skill Verification' },
 ]
 
@@ -50,10 +42,9 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 }
 
-const proofPoints = [
+const reportPoints = [
   '3-way identity check across form name, resume name, and GitHub profile',
   'Evidence-backed claim audit against public GitHub data',
-  'Immutable hash and timestamp for independent recruiter verification',
 ]
 
 export function LandingPage() {
@@ -86,7 +77,7 @@ export function LandingPage() {
           </Motion.h1>
 
           <Motion.p variants={fadeUp} className="mt-5 max-w-lg text-base text-ink-300 md:text-lg">
-            An agentic hiring trust engine that verifies identity, audits public code claims, and anchors tamper-proof reports on-chain.
+            An agentic hiring trust engine that verifies identity, audits public code claims, and delivers evidence-backed reports.
           </Motion.p>
 
           <Motion.div variants={fadeUp} className="mt-8 flex flex-wrap gap-3">
@@ -136,7 +127,7 @@ export function LandingPage() {
                 Live Verification Status
               </p>
               <p className="mt-2.5 text-sm leading-relaxed text-ink-300">
-                Every analysis produces a recruiter verdict, evidence snapshot, skill verification report, and blockchain proof.
+                Every analysis produces a recruiter verdict, evidence snapshot, and skill verification report.
               </p>
               <p className="mt-1.5 text-sm text-ink-500">
                 Designed to verify developer authenticity, not just score resumes.
@@ -150,9 +141,9 @@ export function LandingPage() {
               aria-label="Verification details"
               className="rounded-xl border border-ink-800 bg-ink-950 p-4"
             >
-              <h3 className="text-sm font-semibold text-ink-50">What this proof includes</h3>
+              <h3 className="text-sm font-semibold text-ink-50">What this report includes</h3>
               <ul className="mt-3 space-y-2.5 text-sm text-ink-300">
-                {proofPoints.map((text) => (
+                {reportPoints.map((text) => (
                   <li key={text} className="flex items-start gap-2.5">
                     <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-ink-500" aria-hidden="true" />
                     {text}
@@ -173,7 +164,7 @@ export function LandingPage() {
       >
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-ink-50">Interactive Workflow</h2>
-          <p className="mt-2 text-ink-400">Step-by-step guide to using the Proof-of-Workforce platform.</p>
+          <p className="mt-2 text-ink-400">Step-by-step guide to evaluating candidate experience and skills.</p>
         </div>
         <FlowStepper currentStep={1} />
       </Motion.section>
@@ -224,7 +215,7 @@ export function LandingPage() {
             <h3 className="text-lg font-bold text-ink-50">About Proof-of-Workforce</h3>
             <p className="mt-3 text-sm leading-relaxed text-ink-300">
               Proof-of-Workforce is built as a hiring trust infrastructure layer. It does not replace recruiters or ATS workflows.
-              It adds a defensible verification signal, helping teams justify hiring decisions with transparent AI output and tamper-resistant proof records.
+              It adds a defensible verification signal, helping teams justify hiring decisions with transparent AI output and evidence records.
             </p>
             <ul className="mt-5 space-y-2.5 text-sm text-ink-400">
               {[
@@ -248,7 +239,7 @@ export function LandingPage() {
               {[
                 { role: 'For Recruiters', desc: 'Get clarity fast on who to advance and why.' },
                 { role: 'For Hiring Managers', desc: 'See strengths and risk areas before technical interviews.' },
-                { role: 'For Operations', desc: 'Retain proof trails and verification records for decision audits.' },
+                { role: 'For Operations', desc: 'Retain candidate reports for consistent decision reviews.' },
               ].map((item) => (
                 <div
                   key={item.role}

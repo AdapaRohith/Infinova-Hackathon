@@ -24,16 +24,13 @@ const initialForm = {
 
 const STRONG_GITHUB = 'STRONG'
 
-export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate, onGenerateProof }) {
+export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate }) {
   const [form, setForm] = useState(initialForm)
   const [loading, setLoading] = useState(false)
-  const [proofLoading, setProofLoading] = useState(false)
   const [analyzedId, setAnalyzedId] = useState(null)
   const [serviceFailure, setServiceFailure] = useState(null)
   const navigate = useNavigate()
 
-  // Read back from the shared store so proof status stays in sync with the
-  // background Algorand confirmation polling that App drives.
   const result = useMemo(
     () => candidates.find((candidate) => candidate.id === analyzedId) ?? null,
     [analyzedId, candidates],
@@ -74,24 +71,6 @@ export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate, onG
       toast.error('Real AI analysis failed')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const handleGenerateProof = async () => {
-    if (!result) return
-
-    setProofLoading(true)
-
-    try {
-      // App's reducer owns the verification record — no local copy to keep in sync.
-      const proof = await onGenerateProof?.(result.id)
-      if (proof) {
-        toast.success(proof.confirmed ? 'Blockchain proof confirmed' : 'Blockchain proof submitted')
-      }
-    } catch (error) {
-      toast.error(error?.message || 'Blockchain proof generation failed.')
-    } finally {
-      setProofLoading(false)
     }
   }
 
@@ -172,7 +151,7 @@ export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate, onG
 
         <Card className="lg:col-span-3">
           <h2 className="text-xl font-semibold text-ink-50">AI Output</h2>
-          <p className="mt-1 text-sm text-ink-400">AI insights fetched from your n8n workflow.</p>
+          <p className="mt-1 text-sm text-ink-400">AI insights generated with Gemini.</p>
 
           <AnimatePresence mode="wait">
             {loading ? (
@@ -207,7 +186,7 @@ export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate, onG
                 <p className="mt-2 text-sm text-ink-300">{serviceFailure.message}</p>
                 <p className="mt-3 text-xs text-ink-500">
                   No candidate was scored or stored. Nothing here reflects on this candidate — retry
-                  once the workflow is reachable.
+                  once Gemini is reachable.
                 </p>
                 <Button
                   type="button"
@@ -310,25 +289,8 @@ export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate, onG
                   >
                     Open AI Report
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={proofLoading}
-                    onClick={handleGenerateProof}
-                  >
-                    {proofLoading
-                      ? 'Generating Proof...'
-                      : result.verification?.status
-                        ? 'Regenerate Proof'
-                        : 'Generate Proof'}
-                  </Button>
                 </div>
 
-                {result.verification?.status ? (
-                  <p className="text-xs text-ink-500">
-                    Current proof status: {result.verification.status}
-                  </p>
-                ) : null}
               </Motion.div>
             ) : null}
 
@@ -339,7 +301,7 @@ export function CandidateAnalysisPage({ candidates = [], onAnalyzeCandidate, onG
                 animate={{ opacity: 1 }}
                 className="mt-6 rounded-xl border border-dashed border-ink-700 p-6 text-sm text-ink-400"
               >
-                Submit a candidate to fetch real AI analysis from n8n.
+                Submit a candidate to generate an AI analysis with Gemini.
               </Motion.div>
             ) : null}
           </AnimatePresence>

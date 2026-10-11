@@ -15,16 +15,6 @@ const steps = [
     detail: 'Run model-driven skill scoring, strengths, weaknesses, and summary generation.',
     to: '/analyze',
   },
-  {
-    title: 'Generate Proof',
-    detail: 'Create an immutable hash with timestamp and verified on-chain status.',
-    to: '/dashboard',
-  },
-  {
-    title: 'Verify on Blockchain',
-    detail: 'Validate trust by resolving proof hash back to candidate and report data.',
-    to: '/verify',
-  },
 ]
 
 export function FlowStepper({ currentStep = 1 }) {
@@ -40,7 +30,7 @@ export function FlowStepper({ currentStep = 1 }) {
     <div className="rounded-2xl border border-ink-800 bg-ink-925 p-4">
       <p className="text-xs uppercase tracking-wider text-ink-500">Interactive Workflow</p>
 
-      <ol className="mt-3 grid gap-3 md:grid-cols-4">
+      <ol className="mt-3 grid gap-3 md:grid-cols-2">
         {steps.map((step, index) => {
           const stepNumber = index + 1
           const active = stepNumber === focusStep

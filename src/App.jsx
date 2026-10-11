@@ -6,99 +6,24 @@ import { LandingPage } from './pages/LandingPage'
 import { CandidateAnalysisPage } from './pages/CandidateAnalysisPage'
 import { AIReportPage } from './pages/AIReportPage'
 import { DashboardPage } from './pages/DashboardPage'
-import { VerificationPage } from './pages/VerificationPage'
 import { loadCandidates, saveCandidates } from './utils/storage'
-import { generateHash } from './utils/hash'
-import { isTransactionConfirmed, storeHash } from './utils/blockchain'
 import { normalizeResumePayload } from './utils/resumeNormalizer'
+import { assessGithubEvidence, generateCandidateReport } from './utils/gemini'
 import { verifyIdentity } from './utils/identityVerifier'
 import { synthesizeCandidateAssessment } from './utils/analysisSynthesizer'
-import { deriveAttestationId } from './utils/attestationIdentity'
 import {
   ServiceUnavailableError,
-  SERVICE_BAD_PAYLOAD,
-  SERVICE_EMPTY,
   classifyRequestError,
-  classifyResponseStatus,
-  describeServiceFailure,
 } from './utils/serviceStatus'
 
 const reducer = (state, action) => {
   switch (action.type) {
     case 'ADD_ANALYSIS':
       return [action.payload, ...state]
-    case 'ADD_BLOCKCHAIN_PROOF':
-      return state.map((candidate) =>
-        candidate.id === action.payload.id
-          ? {
-              ...candidate,
-              verification: {
-                hash: action.payload.hash,
-                timestamp: action.payload.timestamp,
-                txHash: action.payload.txHash,
-                status: action.payload.confirmed ? 'Verified on Algorand' : 'Pending on Algorand',
-                senderAddress: action.payload.senderAddress,
-                history: [
-                  ...(candidate.verification?.history ?? []),
-                  {
-                    hash: action.payload.hash,
-                    timestamp: action.payload.timestamp,
-                    txHash: action.payload.txHash,
-                    senderAddress: action.payload.senderAddress,
-                    confirmed: action.payload.confirmed,
-                  },
-                ],
-              },
-            }
-          : candidate,
-      )
-    case 'MARK_BLOCKCHAIN_CONFIRMED':
-      return state.map((candidate) =>
-        candidate.id === action.payload.id && candidate.verification
-          ? {
-              ...candidate,
-              verification: {
-                ...candidate.verification,
-                status: 'Verified on Algorand',
-                timestamp: action.payload.timestamp || candidate.verification.timestamp,
-                txHash: action.payload.txHash || candidate.verification.txHash,
-                history: (candidate.verification.history ?? []).map((item) =>
-                  item.txHash === action.payload.txHash
-                    ? { ...item, confirmed: true }
-                    : item,
-                ),
-              },
-            }
-          : candidate,
-      )
     case 'CLEAR_CANDIDATES':
       return []
     default:
       return state
-  }
-}
-
-const toStructuredAnalysis = (rawText = '') => {
-  const text = String(rawText)
-
-  const scoreMatch = text.match(/Score\s*:\s*(\d+)/i)
-  const summaryMatch = text.match(/Summary\s*:\s*([\s\S]*?)(?:\n\s*(?:Strengths|Skills)\s*:|$)/i)
-  const strengthsMatch = text.match(/Strengths\s*:\s*([\s\S]*?)(?:\n\s*(?:Weaknesses|Skills)\s*:|$)/i)
-  const weaknessesMatch = text.match(/Weaknesses\s*:\s*([\s\S]*?)(?:\n\s*(?:Skills)\s*:|$)/i)
-  const skillsMatch = text.match(/Skills\s*:\s*([\s\S]*)$/i)
-
-  const parseBulletList = (sectionText) =>
-    String(sectionText || '')
-      .split(/[,\n•]/)
-      .map((line) => line.replace(/^\s*[-•]\s*/, '').trim())
-      .filter(Boolean)
-
-  return {
-    score: scoreMatch ? Number(scoreMatch[1]) : 0,
-    summary: summaryMatch ? summaryMatch[1].trim() : text.trim(),
-    strengths: parseBulletList(strengthsMatch?.[1]),
-    weaknesses: parseBulletList(weaknessesMatch?.[1]),
-    skills: parseBulletList(skillsMatch?.[1]),
   }
 }
 
@@ -151,215 +76,40 @@ const fetchGitHubData = async (link) => {
 }
 
 const verifyGitHubWithAI = async (link, skills, resumeText, githubDataInput = null) => {
-  let trimmedLink = String(link || '').trim()
-
-  if (trimmedLink && !trimmedLink.startsWith('http')) {
-    trimmedLink = `https://${trimmedLink}`
+  const githubData = githubDataInput || await fetchGitHubData(link)
+  if (!githubData) {
+    return { score: 0, status: 'REVIEW', details: 'No public GitHub profile data was available to review.', summary: '' }
   }
 
-  if (!trimmedLink || trimmedLink.length < 10) {
-    console.warn('No valid link provided for GitHub verification:', link)
+  try {
+    const data = await assessGithubEvidence({ link, skills, resumeText, githubData })
     return {
-      score: 0,
-      status: 'NO_LINK',
-      details: 'No valid GitHub/portfolio link was provided. Please enter a valid URL to enable autonomous verification.',
-      summary: '',
+      score: Number(data.github_score ?? 0),
+      status: data.verdict || 'REVIEW',
+      details: data.reason || 'Evidence review complete.',
+      summary: data.detailed_summary || data.reason || '',
     }
+  } catch (error) {
+    console.error('GitHub evidence review failed:', error)
+    return { score: 0, status: 'UNAVAILABLE', details: error?.message || 'GitHub evidence review is temporarily unavailable.', summary: '' }
   }
-
-  console.log('Normalized GitHub link:', trimmedLink)
-
-  const githubData = githubDataInput || await fetchGitHubData(trimmedLink)
-  console.log('GitHub API data fetched:', githubData ? `${githubData.public_repos} repos found` : 'failed')
-
-  const maxRetries = 2
-  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
-    try {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 30000)
-
-      const response = await fetch('https://n8n.avlokai.com/webhook/verify-github', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ link: trimmedLink, skills, resumeText, githubData }),
-        signal: controller.signal,
-      })
-
-      clearTimeout(timeoutId)
-
-      if (!response.ok) {
-        console.warn(`verify-github webhook returned status ${response.status} (attempt ${attempt}/${maxRetries})`)
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt))
-          continue
-        }
-
-        const code = classifyResponseStatus(response.status)
-        return {
-          score: 0,
-          status: code,
-          details: describeServiceFailure(code, {
-            label: 'GitHub verification service',
-            httpStatus: response.status,
-          }),
-          summary: '',
-        }
-      }
-
-      const rawBody = await response.text()
-      if (!rawBody?.trim()) {
-        console.warn(`verify-github webhook returned empty body (attempt ${attempt}/${maxRetries})`)
-        if (attempt < maxRetries) {
-          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt))
-          continue
-        }
-
-        return {
-          score: 0,
-          status: SERVICE_EMPTY,
-          details: describeServiceFailure(SERVICE_EMPTY, { label: 'GitHub verification service' }),
-          summary: '',
-        }
-      }
-
-      let rawData = JSON.parse(rawBody)
-      let data = Array.isArray(rawData) ? rawData[0] : rawData
-
-      let aiText = ''
-      if (typeof data.output === 'string') {
-        aiText = data.output
-      } else if (data.output?.[0]?.text) {
-        aiText = data.output[0].text
-      } else if (data.output?.[0]?.content?.[0]?.text) {
-        aiText = data.output[0].content[0].text
-      } else if (data.text) {
-        aiText = data.text
-      }
-
-      if (aiText && typeof aiText === 'string') {
-        try {
-          const start = aiText.indexOf('{')
-          const end = aiText.lastIndexOf('}')
-          if (start !== -1 && end !== -1) {
-            const jsonString = aiText.substring(start, end + 1)
-            const parsed = JSON.parse(jsonString)
-            data = { ...data, ...parsed }
-          }
-        } catch (error) {
-          console.warn('AI output was not valid JSON:', error)
-        }
-      }
-
-      return {
-        score: data.github_score ?? 0,
-        status: data.verdict || 'PENDING',
-        details: data.reason || 'Verification complete.',
-        summary: data.detailed_summary || data.reason || '',
-      }
-    } catch (error) {
-      console.error(`GitHub verification failed (attempt ${attempt}/${maxRetries}):`, error)
-
-      if (attempt < maxRetries) {
-        await new Promise((resolve) => setTimeout(resolve, 1500 * attempt))
-        continue
-      }
-
-      const code = classifyRequestError(error)
-      return {
-        score: 0,
-        status: code,
-        details: describeServiceFailure(code, { label: 'GitHub verification service' }),
-        summary: '',
-      }
-    }
-  }
-
-  return null
 }
 
 const analyzeCandidateWithAI = async (payload) => {
-  console.log('Sending payload to n8n analyze-candidate webhook', payload)
-
-  const serviceLabel = 'analysis service'
-
-  let response
   try {
-    response = await fetch('https://n8n.avlokai.com/webhook/analyze-candidate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
+    const report = await generateCandidateReport(payload)
+    return {
+      score: Math.max(0, Math.min(100, Number(report.score ?? 0))),
+      skills: Array.isArray(report.skills) ? report.skills : [],
+      summary: String(report.summary ?? ''),
+      strengths: Array.isArray(report.strengths) ? report.strengths : [],
+      weaknesses: Array.isArray(report.weaknesses) ? report.weaknesses : [],
+    }
   } catch (error) {
-    // A rejected fetch never reached the workflow — transport, not analysis.
-    const code = classifyRequestError(error)
-    console.error('analyze-candidate transport failure:', error)
-    throw new ServiceUnavailableError(code, describeServiceFailure(code, { label: serviceLabel }), {
-      cause: error,
-    })
+    console.error('Gemini candidate analysis failed:', error)
+    throw new ServiceUnavailableError(classifyRequestError(error), error?.message || 'Gemini could not complete the candidate analysis. Please try again.', { cause: error })
   }
-
-  if (!response.ok) {
-    const code = classifyResponseStatus(response.status)
-    throw new ServiceUnavailableError(
-      code,
-      describeServiceFailure(code, { label: serviceLabel, httpStatus: response.status }),
-      { httpStatus: response.status },
-    )
-  }
-
-  const rawBody = await response.text()
-  if (!rawBody?.trim()) {
-    throw new ServiceUnavailableError(
-      SERVICE_EMPTY,
-      describeServiceFailure(SERVICE_EMPTY, { label: serviceLabel }),
-    )
-  }
-
-  let data
-  try {
-    const parsed = JSON.parse(rawBody)
-    console.log('Raw data received from n8n:', parsed)
-    data = Array.isArray(parsed) ? parsed[0] : parsed
-  } catch {
-    throw new ServiceUnavailableError(
-      SERVICE_BAD_PAYLOAD,
-      describeServiceFailure(SERVICE_BAD_PAYLOAD, { label: serviceLabel }),
-    )
-  }
-
-  if (data?.report) {
-    return {
-      score: Number(data.report.score ?? 0),
-      skills: Array.isArray(data.report.skills) ? data.report.skills : [],
-      summary: String(data.report.summary ?? ''),
-      strengths: Array.isArray(data.report.strengths) ? data.report.strengths : [],
-      weaknesses: Array.isArray(data.report.weaknesses) ? data.report.weaknesses : [],
-      agentSignature: data.report.agentSignature || null,
-    }
-  }
-
-  if (data?.score !== undefined || data?.summary !== undefined) {
-    return {
-      score: Number(data.score ?? 0),
-      skills: Array.isArray(data.skills) ? data.skills : [],
-      summary: String(data.summary ?? ''),
-      strengths: Array.isArray(data.strengths) ? data.strengths : [],
-      weaknesses: Array.isArray(data.weaknesses) ? data.weaknesses : [],
-      agentSignature: data.agentSignature || null,
-    }
-  }
-
-  if (typeof data?.text === 'string' && data.text.trim()) {
-    return toStructuredAnalysis(data.text)
-  }
-
-  throw new Error('n8n response is missing report payload')
 }
-
 function App() {
   const [candidates, dispatch] = useReducer(reducer, [], loadCandidates)
   const { pathname } = useLocation()
@@ -371,37 +121,6 @@ function App() {
   useEffect(() => {
     saveCandidates(candidates)
   }, [candidates])
-
-  const scheduleConfirmationCheck = (candidateId, txHash, attempt = 0) => {
-    const maxAttempts = 10
-    const retryDelayMs = 15000
-
-    window.setTimeout(async () => {
-      try {
-        const confirmed = await isTransactionConfirmed(txHash)
-        if (confirmed) {
-          dispatch({
-            type: 'MARK_BLOCKCHAIN_CONFIRMED',
-            payload: {
-              id: candidateId,
-              txHash,
-              timestamp: new Date().toISOString(),
-            },
-          })
-          return
-        }
-
-        if (attempt + 1 < maxAttempts) {
-          scheduleConfirmationCheck(candidateId, txHash, attempt + 1)
-        }
-      } catch (error) {
-        console.warn('Algorand confirmation recheck failed:', error)
-        if (attempt + 1 < maxAttempts) {
-          scheduleConfirmationCheck(candidateId, txHash, attempt + 1)
-        }
-      }
-    }, retryDelayMs)
-  }
 
   const handleAnalyzeCandidate = async (payload) => {
     await new Promise((resolve) => {
@@ -465,7 +184,6 @@ function App() {
     const candidate = {
       id: crypto.randomUUID(),
       ...normalized,
-      attestationId: deriveAttestationId(normalized.email),
       createdAt: new Date().toISOString(),
       analysis: {
         ...aiReport,
@@ -473,83 +191,16 @@ function App() {
         githubVerification: githubVerification || {
           score: 0,
           status: 'UNAVAILABLE',
-          details: 'GitHub verification could not be completed at this time. Please retry the analysis.',
+          details: 'GitHub evidence review could not be completed at this time. Please retry the analysis.',
           summary: '',
         },
         identityCheck,
         assessment,
       },
-      verification: null,
     }
 
     dispatch({ type: 'ADD_ANALYSIS', payload: candidate })
     return candidate
-  }
-
-  const handleGenerateProof = async (candidateId, onStatusChange) => {
-    const candidate = candidates.find((item) => item.id === candidateId)
-    if (!candidate) return null
-
-    try {
-      const hash = generateHash(candidate.analysis)
-      const attestationId = candidate.attestationId || deriveAttestationId(candidate.email, candidate.id)
-      const tx = await storeHash(attestationId, hash, onStatusChange)
-
-      dispatch({
-        type: 'ADD_BLOCKCHAIN_PROOF',
-        payload: {
-          id: candidateId,
-          attestationId,
-          hash,
-          txHash: tx.txHash,
-          timestamp: tx.timestamp,
-          senderAddress: tx.senderAddress,
-          confirmed: tx.confirmed,
-        },
-      })
-
-      if (!tx.confirmed) {
-        scheduleConfirmationCheck(candidateId, tx.txHash)
-      }
-
-      return {
-        attestationId,
-        hash,
-        txHash: tx.txHash,
-        timestamp: tx.timestamp,
-        senderAddress: tx.senderAddress,
-        confirmed: tx.confirmed,
-      }
-    } catch (error) {
-      console.error('Blockchain error:', error)
-      throw error
-    }
-  }
-
-  const handleRefreshProofStatus = async (candidateId) => {
-    const candidate = candidates.find((item) => item.id === candidateId)
-    const txHash =
-      candidate?.verification?.txHash ||
-      candidate?.verification?.history?.slice(-1)[0]?.txHash
-    if (!candidate || !txHash) return false
-
-    try {
-      const confirmed = await isTransactionConfirmed(txHash)
-      if (!confirmed) return false
-
-      dispatch({
-        type: 'MARK_BLOCKCHAIN_CONFIRMED',
-        payload: {
-          id: candidateId,
-          txHash,
-          timestamp: new Date().toISOString(),
-        },
-      })
-      return true
-    } catch (error) {
-      console.warn('Algorand confirmation refresh failed:', error)
-      return false
-    }
   }
 
   const handleClearCandidates = () => {
@@ -568,7 +219,6 @@ function App() {
               <CandidateAnalysisPage
                 candidates={candidates}
                 onAnalyzeCandidate={handleAnalyzeCandidate}
-                onGenerateProof={handleGenerateProof}
               />
             }
           />
@@ -577,8 +227,6 @@ function App() {
             element={
               <AIReportPage
                 candidates={candidates}
-                onGenerateProof={handleGenerateProof}
-                onRefreshProofStatus={handleRefreshProofStatus}
               />
             }
           />
@@ -591,7 +239,6 @@ function App() {
               />
             }
           />
-          <Route path="/verify" element={<VerificationPage candidates={candidates} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -599,7 +246,7 @@ function App() {
       <footer className="mt-16 border-t border-ink-800">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-xs text-ink-500 sm:px-6 lg:px-8">
           <p>Proof-of-Workforce — agentic hiring trust layer.</p>
-          <p>Attestations anchored on Algorand TestNet.</p>
+          <p>Evidence-backed candidate analysis.</p>
         </div>
       </footer>
 

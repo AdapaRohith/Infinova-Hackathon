@@ -1,4 +1,3 @@
-import { deriveAttestationId } from './attestationIdentity'
 
 const STORAGE_KEY = 'powf-candidates'
 
@@ -9,10 +8,7 @@ export const loadCandidates = () => {
     const parsed = JSON.parse(raw)
 
     return Array.isArray(parsed)
-      ? parsed.map((candidate) => ({
-          ...candidate,
-          attestationId: candidate.attestationId || deriveAttestationId(candidate.email, candidate.id),
-        }))
+      ? parsed.map(({ verification, attestationId, ...candidate }) => candidate)
       : []
   } catch {
     return []

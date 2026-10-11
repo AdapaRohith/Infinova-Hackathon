@@ -6,7 +6,6 @@ const links = [
   { to: '/', label: 'Home' },
   { to: '/analyze', label: 'Analyze' },
   { to: '/dashboard', label: 'Dashboard' },
-  { to: '/verify', label: 'Verify' },
 ]
 
 const linkClasses = ({ isActive }) =>

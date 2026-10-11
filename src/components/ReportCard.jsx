@@ -24,7 +24,7 @@ const githubStatusLabel = (status) => {
   if (status === 'STRONG') return 'Claims Verified'
   if (status === 'WEAK') return 'False / Weak Claims'
   if (status === 'NO_LINK') return 'No Link Provided'
-  if (['WEBHOOK_ERROR', 'EMPTY_RESPONSE', 'UNREACHABLE', 'UNAVAILABLE'].includes(status)) {
+  if (['EMPTY_RESPONSE', 'UNREACHABLE', 'UNAVAILABLE', 'SERVICE_OFFLINE', 'SERVICE_TIMEOUT', 'SERVICE_ERROR'].includes(status)) {
     return 'Service Unavailable'
   }
   return 'Manual Review'
@@ -71,7 +71,6 @@ export function ReportCard({ candidate }) {
   const strengths = analysis.strengths ?? []
   const weaknesses = analysis.weaknesses ?? []
   const githubVerification = analysis.githubVerification
-  const isVerified = Boolean(candidate.verification?.status?.startsWith('Verified'))
 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
@@ -96,16 +95,12 @@ export function ReportCard({ candidate }) {
 
         <div className="mt-4 space-y-2 border-t border-ink-800 pt-4 text-xs text-ink-500">
           <p>Resume: {candidate.resumeName || 'Not uploaded'}</p>
-          <p className="break-all">Attestation ID: {candidate.attestationId || candidate.id}</p>
         </div>
       </Card>
 
       <Card className="space-y-4 lg:col-span-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs uppercase tracking-wider text-ink-500">AI Evaluation</p>
-          <Badge tone={isVerified ? 'ok' : 'neutral'}>
-            {candidate.verification?.status || 'Not Verified'}
-          </Badge>
         </div>
 
         {assessment ? (

@@ -20,7 +20,6 @@ const toBound = (value, fallback) => {
 export function DashboardPage({ candidates, onClearCandidates }) {
   const [minScore, setMinScore] = useState(String(DEFAULT_MIN))
   const [maxScore, setMaxScore] = useState(String(DEFAULT_MAX))
-  const [verifiedOnly, setVerifiedOnly] = useState(false)
   const [selectedSkill, setSelectedSkill] = useState('')
   const [selectedCandidate, setSelectedCandidate] = useState(null)
 
@@ -33,7 +32,6 @@ export function DashboardPage({ candidates, onClearCandidates }) {
   const handleResetFilters = () => {
     setMinScore(String(DEFAULT_MIN))
     setMaxScore(String(DEFAULT_MAX))
-    setVerifiedOnly(false)
     setSelectedSkill('')
   }
 
@@ -53,18 +51,14 @@ export function DashboardPage({ candidates, onClearCandidates }) {
 
     return candidates.filter((candidate) => {
       const score = candidate.analysis?.score ?? 0
-      const verified = candidate.verification?.status?.startsWith('Verified')
       const matchedSkills = candidate.analysis?.skills || candidate.skills || []
       const matchesSkill = !selectedSkill || matchedSkills.includes(selectedSkill)
 
-      return score >= min && score <= max && (!verifiedOnly || verified) && matchesSkill
+      return score >= min && score <= max && matchesSkill
     })
-  }, [candidates, maxScore, minScore, selectedSkill, verifiedOnly])
+  }, [candidates, maxScore, minScore, selectedSkill])
 
   const stats = useMemo(() => {
-    const verified = candidates.filter((candidate) =>
-      candidate.verification?.status?.startsWith('Verified'),
-    ).length
     const trusted = candidates.filter(
       (candidate) => candidate.analysis?.assessment?.verdict === 'Trusted',
     ).length
@@ -80,7 +74,6 @@ export function DashboardPage({ candidates, onClearCandidates }) {
 
     return [
       { label: 'Total Candidates', value: candidates.length, ink: 'text-ink-50' },
-      { label: 'Verified On Algorand', value: verified, ink: 'text-state-ok' },
       { label: 'Average Score', value: avgScore, ink: 'text-ink-50' },
       { label: 'Trusted', value: trusted, ink: 'text-state-ok' },
       { label: 'High Risk', value: highRisk, ink: 'text-state-bad' },
@@ -88,14 +81,13 @@ export function DashboardPage({ candidates, onClearCandidates }) {
   }, [candidates])
 
   const filtersActive =
-    verifiedOnly ||
     Boolean(selectedSkill) ||
     toBound(minScore, DEFAULT_MIN) !== DEFAULT_MIN ||
     toBound(maxScore, DEFAULT_MAX) !== DEFAULT_MAX
 
   return (
     <div className="space-y-6 pb-14">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="p-4">
             <p className="text-xs uppercase tracking-wider text-ink-500">{stat.label}</p>
@@ -109,7 +101,7 @@ export function DashboardPage({ candidates, onClearCandidates }) {
           <div>
             <h1 className="text-2xl font-semibold text-ink-50">Recruiter Dashboard</h1>
             <p className="mt-2 text-sm text-ink-400">
-              Filter and review candidate verification status at a glance.
+              Filter and review candidate analysis results at a glance.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -164,15 +156,6 @@ export function DashboardPage({ candidates, onClearCandidates }) {
               ))}
             </select>
           </label>
-          <label className="flex cursor-pointer items-center gap-3 self-end rounded-xl border border-ink-700 bg-ink-950 px-4 py-3 text-sm text-ink-300 transition-colors hover:border-ink-600">
-            <input
-              type="checkbox"
-              checked={verifiedOnly}
-              onChange={(event) => setVerifiedOnly(event.target.checked)}
-              className="size-4 accent-ink-100"
-            />
-            Verified only
-          </label>
         </div>
 
         <p className="mt-4 text-xs text-ink-500">
@@ -185,7 +168,7 @@ export function DashboardPage({ candidates, onClearCandidates }) {
         <Card className="p-8 text-center">
           <p className="text-sm text-ink-200">No candidates have been analyzed yet.</p>
           <p className="mt-2 text-xs text-ink-500">
-            Run an analysis to populate the dashboard and enable on-chain proofs.
+            Run an analysis to populate the dashboard with candidate insights.
           </p>
           <Link to="/analyze" className="mt-5 inline-block">
             <Button type="button">Analyze a Candidate</Button>

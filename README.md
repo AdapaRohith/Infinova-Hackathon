@@ -1,8 +1,8 @@
 # Infinova Hiring Trust Engine
 
-Infinova is a recruiter-focused verification platform that checks candidate claims and creates tamper-evident hiring attestations on-chain.
+Infinova is a recruiter-focused candidate analysis platform that reviews candidate claims and produces evidence-backed hiring reports.
 
-It combines resume intelligence, identity cross-checks, GitHub evidence review, and blockchain proof in one workflow.
+It combines resume intelligence, identity cross-checks, and GitHub evidence review in one workflow.
 
 ## Why This Project
 
@@ -20,7 +20,6 @@ The platform helps teams answer:
 - 3-way identity verification across form input, resume, and GitHub/profile data
 - Claim consistency checks and mismatch alerts
 - Recruiter-friendly verdicting (`Trusted`, `Needs Review`, `High Risk`)
-- On-chain attestation with transaction-level verification metadata
 
 ## How It Works
 
@@ -28,7 +27,6 @@ The platform helps teams answer:
 2. The app extracts and normalizes resume information.
 3. Identity and claim checks run across all available sources.
 4. A final evidence-backed report and verdict are generated.
-5. A cryptographic proof is anchored on-chain for later verification.
 
 ## Tech Stack
 
@@ -37,17 +35,8 @@ The platform helps teams answer:
 - React Router
 - Framer Motion
 - PDF.js (`pdfjs-dist`)
-- Algorand SDK (`algosdk`) + Pera Wallet Connect
 - Browser persistence via `localStorage`
-
-## Blockchain Attestation Model
-
-- Network: `Algorand TestNet`
-- Attestation method: self-payment transaction note
-- Stored on-chain: candidate identifier + report hash metadata (in encoded note)
-- Stored off-chain: full report payload and sensitive candidate data
-
-This design keeps costs low and preserves privacy while still providing tamper-evident integrity.
+- Gemini API (`gemini-3.8-flash`) for candidate reports and GitHub evidence review
 
 ## Quick Start
 
@@ -62,6 +51,14 @@ This design keeps costs low and preserves privacy while still providing tamper-e
 ```bash
 npm install
 ```
+
+Create a `.env.local` file in the project root and add your Gemini key:
+
+```bash
+VITE_GEMINI_API_KEY=your-gemini-api-key
+```
+
+The Vite client sends Gemini requests directly from the browser. Restrict the key in Google AI Studio to the Gemini API and your app origins, and use a server-side proxy for production deployments where the key must remain private.
 
 ### Run Development Server
 
@@ -85,7 +82,7 @@ The app starts on the local Vite URL shown in your terminal (typically `http://l
 src/
 	components/     Reusable UI and feature components
 	pages/          Route-level pages (dashboard, analysis, verification)
-	utils/          Verification, hashing, blockchain, and extraction logic
+	utils/          Candidate analysis, identity, and extraction logic
 public/           Static assets
 ```
 
@@ -100,4 +97,4 @@ The configured `homepage` in `package.json` is used for the published route.
 
 ## Recommended Demo Narrative
 
-"Infinova verifies truth, not just talent. It cross-checks identity and skill evidence, then anchors a tamper-evident proof of the hiring report on-chain."
+"Infinova evaluates more than resumes. It cross-checks identity and skill evidence to produce useful hiring reports."

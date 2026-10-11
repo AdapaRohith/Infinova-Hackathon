@@ -1,12 +1,11 @@
 import { motion as Motion } from 'framer-motion'
-import { FileText, Cpu, Github, ShieldCheck, Database, ArrowRight, ScanSearch } from 'lucide-react'
+import { FileText, Cpu, Github, Database, ArrowRight, ScanSearch } from 'lucide-react'
 
 const systemNodes = [
   { id: 'input', icon: FileText, label: 'PDF Resume', sub: 'Claim Extraction' },
   { id: 'identity-agent', icon: ScanSearch, label: 'Identity Agent', sub: '3-Way Name Check' },
   { id: 'github-agent', icon: Github, label: 'Evidence Agent', sub: 'GitHub Claim Audit' },
   { id: 'decision-agent', icon: Cpu, label: 'Decision Agent', sub: 'Risk + Verdict' },
-  { id: 'blockchain', icon: ShieldCheck, label: 'On-Chain Proof', sub: 'Tamper-Evident Hash' },
   { id: 'storage', icon: Database, label: 'Recruiter Console', sub: 'Decision Ready' },
 ]
 
@@ -14,7 +13,7 @@ const infoTags = [
   { label: 'Data Ingest', detail: 'pdfjs-dist coordinate parser' },
   { label: 'Agentic Layer', detail: 'Resume, identity, evidence, decision agents' },
   { label: 'Evidence', detail: 'Resume parsing + GitHub API + identity verification' },
-  { label: 'Trust Model', detail: 'Tamper-evident decision report anchored on-chain' },
+  { label: 'Trust Model', detail: 'Evidence-backed recruiter decision report' },
 ]
 
 export function SystemFlow() {

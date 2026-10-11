@@ -1,5 +1,5 @@
 /**
- * Shared vocabulary for "the verification backend did not answer".
+ * Shared vocabulary for Gemini API request failures.
  *
  * A browser cannot distinguish "origin server is down" from "CORS is
  * misconfigured": an unreachable host's error page (e.g. a Cloudflare 530)
@@ -16,12 +16,11 @@ export const SERVICE_EMPTY = 'EMPTY_RESPONSE'
 export const SERVICE_BAD_PAYLOAD = 'SERVICE_BAD_PAYLOAD'
 
 /**
- * Statuses that mean the audit never ran. These say nothing about the
+ * Statuses that mean the review never ran. These say nothing about the
  * candidate, so callers must not treat them as negative evidence.
- * Legacy codes are kept so previously stored candidates still classify.
+ * Earlier stored candidates may still contain legacy failure codes.
  */
 export const SERVICE_FAILURE_STATUSES = [
-  'WEBHOOK_ERROR',
   'UNREACHABLE',
   'UNAVAILABLE',
   SERVICE_OFFLINE,
@@ -81,9 +80,9 @@ export const describeServiceFailure = (code, { label = 'verification service', h
     case SERVICE_TIMEOUT:
       return `The ${label} timed out before responding. Nothing was evaluated, so this is not a result for this candidate.`
     case SERVICE_EMPTY:
-      return `The ${label} accepted the request but returned an empty response. Check that the workflow ends in a "Respond to Webhook" node.`
+      return `The ${label} returned an empty response. Please try again.`
     case SERVICE_BAD_PAYLOAD:
-      return `The ${label} returned a response this app could not read. Check that the workflow responds with JSON.`
+      return `The ${label} returned a response this app could not read. Please try again.`
     default:
       return httpStatus
         ? `The ${label} returned an error (HTTP ${httpStatus}). Nothing was evaluated.`
